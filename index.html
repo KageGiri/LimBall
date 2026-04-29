@@ -42,7 +42,7 @@
         document.getElementById('btn-roll').addEventListener('click', async () => {
             document.getElementById('result').innerText = "Đang quay...";
             try {
-                const response = await fetch('http://localhost:3000/api/roll');
+                const response = await fetch('https://limball.onrender.com/api/roll');
                 currentBall = await response.json();
                 
                 document.getElementById('result').innerText = `🎉 Bạn vừa quay ra: ${currentBall.race} cầm ${currentBall.weapon}!`;
@@ -59,7 +59,7 @@
             if (!currentBall) return;
             document.getElementById('result').innerText = "Đang lưu vào Database...";
             try {
-                const response = await fetch('http://localhost:3000/api/save-ball', {
+                const response = await fetch('https://limball.onrender.com/api/save-ball', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(currentBall)
@@ -78,7 +78,7 @@
             const inventoryDiv = document.getElementById('inventory-list');
             inventoryDiv.innerHTML = "Đang tải dữ liệu từ Database...";
             try {
-                const response = await fetch('http://localhost:3000/api/inventory');
+                const response = await fetch('https://limball.onrender.com/api/inventory');
                 const myBalls = await response.json(); // Lấy toàn bộ mảng từ Server
                 
                 if (myBalls.length === 0) {
@@ -107,6 +107,146 @@
             } catch (error) {
                 inventoryDiv.innerHTML = "❌ Lỗi khi tải kho đồ. Đảm bảo Server đang chạy!";
             }
+        });
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Gacha Wheel</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #1e272e; color: white; margin-top: 30px;}
+        h1 { color: #f1c40f; }
+        
+        /* --- KHUNG VÒNG QUAY --- */
+        #wheel-container {
+            position: relative;
+            width: 350px;
+            height: 350px;
+            margin: 20px auto;
+        }
+
+        /* Mũi tên chỉ kết quả */
+        #pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 40px;
+            color: #e74c3c;
+            z-index: 10;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        /* Hình tròn vòng quay */
+        #wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 8px solid #ecf0f1;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+            /* Hiệu ứng quay mượt dần lúc dừng (cubic-bezier) */
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99); 
+        }
+
+        /* Chữ bên trong vòng quay */
+        .slice {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            top: 0; right: 0;
+            transform-origin: 0% 100%; /* Tâm quay ở giữa hình tròn */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: #fff;
+            text-shadow: 1px 1px 2px black;
+            box-sizing: border-box;
+            padding-bottom: 80px; /* Đẩy chữ ra xa tâm */
+            padding-right: 40px;
+        }
+
+        button { padding: 15px 30px; font-size: 18px; cursor: pointer; border-radius: 8px; border: none; background-color: #3498db; color: white; font-weight: bold;}
+        button:hover { background-color: #2980b9; }
+        #result-text { margin-top: 20px; font-size: 24px; color: #2ecc71; font-weight: bold;}
+    </style>
+</head>
+<body>
+
+    <h1>🎡 Vòng Quay Dân Tộc</h1>
+    
+    <div id="wheel-container">
+        <div id="pointer">▼</div>
+        <div id="wheel"></div>
+    </div>
+
+    <button id="btn-spin">QUAY DÂN TỘC!</button>
+    <div id="result-text"></div>
+
+    <script>
+        // Danh sách Dân tộc (Phải khớp với Backend)
+        const races = ["Human", "Elf", "Orc", "Dragonborn", "Dwarf"];
+        // Màu sắc tương ứng cho các ô
+        const colors = ["#e74c3c", "#2ecc71", "#3498db", "#f39c12", "#9b59b6"];
+        
+        const wheel = document.getElementById('wheel');
+        const sliceAngle = 360 / races.length;
+        let currentRotation = 0;
+
+        // --- HÀM VẼ VÒNG QUAY ---
+        function drawWheel() {
+            let gradientStr = "";
+            races.forEach((race, index) => {
+                // 1. Vẽ màu nền cho ô bằng conic-gradient
+                const startAngle = index * sliceAngle;
+                const endAngle = (index + 1) * sliceAngle;
+                gradientStr += `${colors[index]} ${startAngle}deg ${endAngle}deg, `;
+
+                // 2. Viết chữ lên ô
+                const slice = document.createElement('div');
+                slice.className = 'slice';
+                slice.innerText = race;
+                // Xoay chữ cho đúng góc
+                slice.style.transform = `rotate(${startAngle + sliceAngle/2}deg) skewY(${90 - sliceAngle}deg)`;
+                wheel.appendChild(slice);
+            });
+
+            // Gắn màu nền vào vòng quay
+            wheel.style.background = `conic-gradient(${gradientStr.slice(0, -2)})`;
+        }
+
+        drawWheel(); // Gọi hàm để vẽ ngay khi mở web
+
+        // --- SỰ KIỆN KHI BẤM NÚT QUAY ---
+        document.getElementById('btn-spin').addEventListener('click', () => {
+            document.getElementById('result-text').innerText = "Đang quay...";
+            
+            
+            // Tạm thời dùng Random thuần ở Frontend để test (Sau này sẽ gọi Backend)
+            const winningIndex = Math.floor(Math.random() * races.length);
+            const winner = races[winningIndex];
+
+            // Tính toán góc quay:
+            // 1. Quay vài vòng cho xôm (ví dụ 5 vòng = 1800 độ)
+            const extraSpins = 360 * 5; 
+            // 2. Góc của ô chiến thắng (Trừ đi góc này để vòng quay dừng đúng chỗ)
+            const stopAngle = 360 - (winningIndex * sliceAngle + sliceAngle / 2);
+
+            currentRotation += extraSpins + stopAngle;
+
+            // Xoay CSS
+            wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+            // Chờ 4 giây cho vòng quay dừng hẳn rồi mới báo kết quả
+            setTimeout(() => {
+                document.getElementById('result-text').innerText = `🎉 Bạn quay trúng: ${winner}!`;
+            }, 4000);
         });
     </script>
 </body>
