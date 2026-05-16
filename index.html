@@ -2116,7 +2116,6 @@ function drawArena(dt){
     }
 
     // hit flash
-    const foeColor=P_COLORS[fi];
     if(f.hitFlash>0){
       actx.save();actx.globalAlpha=f.hitFlash*0.6;
       actx.beginPath();actx.arc(f.x,f.y,f.r+10,0,Math.PI*2);
@@ -2347,7 +2346,6 @@ function arenaLoop(ts){
     // hit cooldown ticks
     if(f.wepHitCooldown>0) f.wepHitCooldown-=dt;
     if(f.bodyHitCooldown>0) f.bodyHitCooldown-=dt;
-    if(f.wepHitCooldown>0)  f.wepHitCooldown-=dt;
     if(f.wepWepCooldown>0)  f.wepWepCooldown-=dt;
 
     // ── Movement (px/s physics) ───────────────────────────────────
