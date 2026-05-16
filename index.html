@@ -2707,7 +2707,7 @@ function showToast(msg){
 // ══════════════════════════════════════════════════════
 window.onload = async () => {
   try {
-    const response = await fetch('./meobal.xlsx');
+    const response = await fetch('https://github.com/KageGiri/LimBall/raw/refs/heads/main/meobal.xlsx');
     if (!response.ok) throw new Error('Không thể tải file meobal.xlsx');
     
     const buffer = await response.arrayBuffer();
