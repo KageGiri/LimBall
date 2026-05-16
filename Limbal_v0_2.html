@@ -1,0 +1,2552 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✦ LimBall — Every Choice, Every Clash</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=IM+Fell+English:ital@0;1&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════
+   LIMBALL — DARK FANTASY THEME  v0.2
+   "Every Choice, Every Clash. The Path Written By You."
+══════════════════════════════════════════════════════ */
+
+/* ─── DESIGN TOKENS ──────────────────────────────────── */
+:root{
+  /* Core palette */
+  --void:       #05030a;
+  --abyss:      #0d0916;
+  --stone:      #1a1328;
+  --stone-light:#241c38;
+  --rune:       #3d2e5a;
+  --rune-bright:#6b4fa0;
+
+  /* Gold / parchment */
+  --gold:       #c9913a;
+  --gold-bright:#f0c060;
+  --gold-pale:  #e8d5a0;
+  --parchment:  #d4b896;
+
+  /* Accent blood */
+  --blood:      #8b1a1a;
+  --crimson:    #c0392b;
+  --crimson-bright:#e05555;
+
+  /* Arcane blue */
+  --arcane:     #1a3d5c;
+  --arcane-bright:#2980b9;
+  --arcane-glow:#4ecdc4;
+
+  /* Text */
+  --text-primary: #e8d5a0;
+  --text-dim:     #8a7a60;
+  --text-faint:   #4a3f30;
+
+  /* Misc */
+  --r:4px;
+  --r-lg:8px;
+  --ff-title:'Cinzel Decorative',serif;
+  --ff-head: 'Cinzel',serif;
+  --ff-body: 'IM Fell English',serif;
+  --ff-mono: 'JetBrains Mono',monospace;
+
+  /* Glow shortcuts */
+  --glow-gold:  0 0 18px #c9913a55, 0 0 40px #c9913a22;
+  --glow-blood: 0 0 18px #c0392b55, 0 0 40px #c0392b22;
+  --glow-arcane:0 0 18px #2980b955, 0 0 40px #2980b922;
+}
+
+/* ─── RESET ───────────────────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box;}
+html{font-size:15px;scroll-behavior:smooth;}
+
+body{
+  background:var(--void);
+  color:var(--text-primary);
+  font-family:var(--ff-head);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ─── NOISE TEXTURE OVERLAY ──────────────────────────── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity:0.03;
+  pointer-events:none;z-index:0;
+}
+
+/* ─── SCREENS ─────────────────────────────────────────── */
+.screen{display:none;flex-direction:column;align-items:center;min-height:100vh;padding:28px 16px 56px;position:relative;z-index:1;}
+.screen.active{display:flex;}
+
+/* ─── DECORATIVE DIVIDER ─────────────────────────────── */
+.rune-divider{
+  width:100%;max-width:480px;
+  display:flex;align-items:center;gap:12px;
+  margin:8px 0;
+}
+.rune-divider::before,.rune-divider::after{
+  content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold) 40%,transparent);
+  opacity:.45;
+}
+.rune-divider span{
+  font-family:var(--ff-mono);font-size:.55rem;letter-spacing:.3em;
+  color:var(--gold);opacity:.7;white-space:nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LANDING SCREEN
+═══════════════════════════════════════════════════════ */
+#screen-landing{
+  justify-content:center;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 30%, #1a0d2e 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 20% 80%, #1a0a0a 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, #0a0d1a 0%, transparent 60%),
+    var(--void);
+  color:var(--text-primary);
+  gap:0;
+}
+
+/* ambient orbs */
+#screen-landing::after{
+  content:'';
+  position:absolute;
+  width:300px;height:300px;
+  border-radius:50%;
+  background:radial-gradient(circle,#3d1a6644 0%,transparent 70%);
+  top:10%;left:50%;transform:translateX(-50%);
+  pointer-events:none;
+  animation:breathe 5s ease-in-out infinite;
+}
+@keyframes breathe{0%,100%{opacity:.5;transform:translateX(-50%) scale(1);}50%{opacity:1;transform:translateX(-50%) scale(1.12);}}
+
+/* top ornament */
+.landing-ornament{
+  font-family:var(--ff-mono);font-size:.5rem;letter-spacing:.5em;
+  color:var(--gold);opacity:.5;margin-bottom:20px;text-align:center;
+}
+
+/* Logo */
+.landing-logo{
+  position:relative;text-align:center;margin-bottom:6px;
+}
+.landing-logo-lim{
+  display:block;
+  font-family:var(--ff-title);
+  font-size:clamp(3.5rem,12vw,7rem);
+  font-weight:700;
+  color:var(--gold-pale);
+  letter-spacing:.06em;
+  line-height:1;
+  text-shadow:
+    0 0 30px #c9913a88,
+    0 0 80px #c9913a33,
+    0 2px 4px #00000099;
+  animation:titleGlow 4s ease-in-out infinite;
+}
+.landing-logo-ball{
+  display:block;
+  font-family:var(--ff-title);
+  font-size:clamp(3.5rem,12vw,7rem);
+  font-weight:700;
+  color:transparent;
+  -webkit-text-stroke:2px var(--gold);
+  letter-spacing:.06em;
+  line-height:1;
+  text-shadow:none;
+  filter:drop-shadow(0 0 20px #c9913a66);
+}
+@keyframes titleGlow{
+  0%,100%{text-shadow:0 0 30px #c9913a88,0 0 80px #c9913a33,0 2px 4px #00000099;}
+  50%{text-shadow:0 0 50px #f0c060bb,0 0 100px #c9913a55,0 2px 4px #00000099;}
+}
+
+.landing-sub{
+  font-family:var(--ff-mono);
+  font-size:.62rem;
+  letter-spacing:.35em;
+  color:var(--text-dim);
+  text-align:center;
+  margin-bottom:40px;
+  text-transform:uppercase;
+}
+
+/* Upload zone — styled as ancient scroll */
+.upload-card{
+  position:relative;
+  background:
+    linear-gradient(135deg,#1e1530 0%,#150f24 50%,#1e1530 100%);
+  border:1px solid var(--rune);
+  border-radius:var(--r-lg);
+  padding:36px 44px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .3s ease;
+  max-width:420px;
+  width:100%;
+  box-shadow:
+    0 0 0 1px #ffffff08,
+    0 8px 32px #00000088,
+    inset 0 1px 0 #ffffff0a;
+}
+.upload-card::before{
+  content:'';
+  position:absolute;inset:-1px;
+  border-radius:calc(var(--r-lg) + 1px);
+  background:linear-gradient(135deg,#6b4fa055 0%,transparent 50%,#c9913a33 100%);
+  pointer-events:none;
+  opacity:0;transition:opacity .3s;
+}
+.upload-card:hover{
+  border-color:var(--gold);
+  box-shadow:var(--glow-gold),0 8px 32px #00000088,inset 0 1px 0 #ffffff0a;
+  transform:translateY(-2px);
+}
+.upload-card:hover::before{opacity:1;}
+.upload-card input{display:none;}
+
+.upload-icon{
+  font-size:2rem;
+  margin-bottom:14px;
+  display:block;
+  opacity:.8;
+  filter:drop-shadow(0 0 8px #c9913a66);
+}
+.upload-label{
+  font-family:var(--ff-head);
+  font-size:1rem;
+  font-weight:600;
+  letter-spacing:.1em;
+  color:var(--gold-pale);
+  margin-bottom:8px;
+}
+.upload-hint{
+  font-family:var(--ff-mono);font-size:.62rem;
+  color:var(--text-dim);
+  line-height:1.7;
+}
+.upload-hint em{
+  color:var(--gold);opacity:.8;font-style:normal;
+}
+.upload-status{
+  margin-top:20px;
+  font-family:var(--ff-mono);font-size:.68rem;
+  color:var(--arcane-glow);
+  min-height:22px;
+  letter-spacing:.05em;
+}
+
+/* version badge */
+.landing-version{
+  margin-top:28px;
+  font-family:var(--ff-mono);font-size:.52rem;
+  letter-spacing:.3em;color:var(--text-faint);
+}
+
+/* ═══════════════════════════════════════════════════════
+   PLAYER SELECT SCREEN
+═══════════════════════════════════════════════════════ */
+#screen-select{
+  background:
+    radial-gradient(ellipse 100% 50% at 50% 0%, #1a0d2e22 0%, transparent 60%),
+    var(--abyss);
+  gap:16px;
+}
+
+.section-title{
+  font-family:var(--ff-head);
+  font-size:1.1rem;
+  font-weight:700;
+  letter-spacing:.2em;
+  color:var(--gold-pale);
+  text-align:center;
+  padding-bottom:8px;
+  margin-bottom:2px;
+  position:relative;
+  align-self:center;
+  text-transform:uppercase;
+}
+.section-title::after{
+  content:'';
+  position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:60%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  opacity:.5;
+}
+
+.player-slots{
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;
+  width:100%;max-width:660px;
+}
+
+.player-slot{
+  background:linear-gradient(135deg,var(--stone) 0%,var(--abyss) 100%);
+  border:1px solid var(--rune);
+  border-radius:var(--r-lg);
+  padding:16px;
+  position:relative;
+  min-height:150px;
+  box-shadow:0 4px 20px #00000066,inset 0 1px 0 #ffffff08;
+  transition:border-color .2s,box-shadow .2s;
+}
+.player-slot:has(.slot-race):not(:has(.slot-empty)){
+  border-color:var(--gold);
+  box-shadow:var(--glow-gold),0 4px 20px #00000066,inset 0 1px 0 #ffffff08;
+}
+
+/* slot corner runes */
+.player-slot::before{
+  content:'✦';
+  position:absolute;top:8px;right:10px;
+  font-size:.55rem;color:var(--gold);opacity:.3;
+}
+
+.slot-label{
+  font-family:var(--ff-mono);font-size:.58rem;
+  letter-spacing:.3em;color:var(--text-dim);
+  margin-bottom:10px;text-transform:uppercase;
+}
+.slot-race{
+  font-family:var(--ff-head);
+  font-size:1.05rem;font-weight:700;
+  color:var(--gold-pale);
+  letter-spacing:.06em;
+  margin-bottom:6px;
+  text-shadow:0 0 12px #c9913a55;
+}
+.slot-stats{
+  font-family:var(--ff-mono);font-size:.62rem;
+  line-height:2;color:var(--text-dim);
+}
+.slot-stats b{color:var(--gold-bright);}
+.slot-empty{
+  color:var(--text-faint);
+  font-family:var(--ff-body);
+  font-style:italic;
+  font-size:.85rem;
+  margin-top:16px;
+  line-height:1.7;
+}
+.slot-tag{
+  display:inline-block;
+  font-family:var(--ff-mono);font-size:.54rem;
+  padding:2px 7px;border-radius:3px;
+  margin:2px 2px 0 0;
+  letter-spacing:.04em;
+}
+.slot-tag.weapon{
+  background:#2a1800;border:1px solid #c9913a55;color:#c9913a;
+}
+.slot-tag.skill{
+  background:#00161a;border:1px solid #2a9d8f55;color:#4ecdc4;
+}
+.slot-tag.gear{
+  background:#1a0000;border:1px solid #c0392b55;color:#e05555;
+}
+
+/* ─── BUTTONS — Stone Tablet Style ──────────────────── */
+.btn{
+  font-family:var(--ff-head);
+  font-weight:600;font-size:.78rem;
+  letter-spacing:.12em;text-transform:uppercase;
+  padding:11px 26px;
+  border:1px solid var(--rune);
+  border-radius:var(--r);
+  cursor:pointer;
+  background:linear-gradient(135deg,var(--stone-light) 0%,var(--stone) 100%);
+  color:var(--text-primary);
+  box-shadow:0 2px 8px #00000066,inset 0 1px 0 #ffffff0a;
+  transition:all .18s ease;
+  position:relative;overflow:hidden;
+}
+.btn::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom,#ffffff06 0%,transparent 50%);
+  pointer-events:none;
+}
+.btn:hover{
+  border-color:var(--gold);
+  color:var(--gold-pale);
+  box-shadow:var(--glow-gold),0 2px 8px #00000066,inset 0 1px 0 #ffffff0a;
+  transform:translateY(-1px);
+}
+.btn:active{transform:translateY(0);box-shadow:0 1px 4px #00000066;}
+.btn:disabled{opacity:.3;cursor:not-allowed;transform:none!important;box-shadow:none!important;}
+
+.btn-primary{
+  background:linear-gradient(135deg,#2a1800 0%,#1a1000 100%);
+  border-color:var(--gold);
+  color:var(--gold-pale);
+  box-shadow:var(--glow-gold),0 2px 8px #00000066;
+}
+.btn-primary:hover{
+  background:linear-gradient(135deg,#3d2200 0%,#2a1800 100%);
+  color:var(--gold-bright);
+}
+.btn-accent{
+  background:linear-gradient(135deg,var(--blood) 0%,#3a0000 100%);
+  color:#ffcccc;border-color:var(--crimson);
+  box-shadow:var(--glow-blood),0 2px 8px #00000066;
+}
+.btn-accent:hover{
+  background:linear-gradient(135deg,var(--crimson) 0%,var(--blood) 100%);
+  color:#fff;
+}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+
+/* ═══════════════════════════════════════════════════════
+   SPIN SCREEN
+═══════════════════════════════════════════════════════ */
+#screen-spin{
+  background:
+    radial-gradient(ellipse 90% 60% at 50% 20%,#1a0d2e 0%,transparent 70%),
+    var(--void);
+  color:var(--text-primary);
+  justify-content:flex-start;gap:0;padding:0;
+}
+
+.spin-header{
+  width:100%;
+  background:linear-gradient(to right,#120e1e,#0d0916,#120e1e);
+  padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--rune);
+  box-shadow:0 2px 16px #00000055;
+}
+.spin-header-left{display:flex;flex-direction:column;gap:3px;}
+.spin-player-label{
+  font-family:var(--ff-mono);font-size:.58rem;
+  letter-spacing:.3em;color:var(--text-dim);
+}
+.spin-player-race{
+  font-family:var(--ff-head);font-size:1rem;font-weight:700;
+  color:var(--gold-pale);letter-spacing:.08em;
+  text-shadow:0 0 12px #c9913a55;
+}
+.spin-step-label{
+  font-family:var(--ff-mono);font-size:.58rem;
+  color:var(--gold-bright);letter-spacing:.2em;
+  text-align:right;
+  padding:4px 10px;
+  border:1px solid var(--gold)44;
+  border-radius:3px;
+  background:#c9913a0a;
+}
+
+.spin-body{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:16px;padding:16px;width:100%;
+}
+
+/* Wheel */
+.wheel-wrap{
+  position:relative;
+  width:min(420px,90vw);height:min(420px,90vw);
+}
+#spinCanvas{
+  width:100%;height:100%;border-radius:50%;
+  filter:drop-shadow(0 0 30px #c9913a44) drop-shadow(0 0 60px #6b4fa022);
+}
+
+/* outer decorative ring */
+.wheel-outer-ring{
+  position:absolute;inset:-10px;border-radius:50%;
+  border:2px solid transparent;
+  background:linear-gradient(var(--void),var(--void)) padding-box,
+    linear-gradient(135deg,#c9913a,#6b4fa0,#c9913a,#2980b9,#c9913a) border-box;
+  box-shadow:
+    0 0 30px #c9913a33,
+    0 0 60px #c9913a11,
+    inset 0 0 30px #00000066;
+  pointer-events:none;z-index:1;
+  animation:ringRotate 20s linear infinite;
+}
+@keyframes ringRotate{from{filter:hue-rotate(0deg);}to{filter:hue-rotate(360deg);}}
+
+/* second ring */
+.wheel-outer-ring::before{
+  content:'';
+  position:absolute;inset:4px;border-radius:50%;
+  border:1px solid #c9913a22;
+}
+
+/* tick marks on ring */
+.wheel-outer-ring::after{
+  content:'';
+  position:absolute;inset:-4px;border-radius:50%;
+  border:1px dashed #c9913a18;
+}
+
+/* pointer — ornate downward arrow */
+.wheel-pointer{
+  position:absolute;top:-28px;left:50%;transform:translateX(-50%);
+  z-index:4;
+  width:20px;height:34px;
+  filter:drop-shadow(0 2px 8px #c9913a88);
+}
+.wheel-pointer::before{
+  content:'';
+  position:absolute;left:50%;transform:translateX(-50%);
+  top:0;
+  width:0;height:0;
+  border-left:10px solid transparent;
+  border-right:10px solid transparent;
+  border-top:20px solid var(--gold-bright);
+}
+.wheel-pointer::after{
+  content:'';
+  position:absolute;left:50%;transform:translateX(-50%);
+  top:16px;
+  width:4px;height:18px;
+  background:linear-gradient(to bottom,var(--gold-bright),var(--gold)66);
+  border-radius:0 0 2px 2px;
+}
+
+.wheel-center{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:52px;height:52px;border-radius:50%;
+  background:radial-gradient(circle,#2a1a4a 0%,#0d0916 100%);
+  border:2px solid var(--gold)66;
+  box-shadow:0 0 16px #00000099,0 0 8px #c9913a33;
+  z-index:3;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;color:var(--gold);opacity:.8;
+}
+
+/* result box — carved stone style */
+.spin-result-box{
+  background:linear-gradient(135deg,#1a1328 0%,#120e1e 100%);
+  border:1px solid var(--rune);
+  border-radius:var(--r-lg);
+  padding:14px 22px;
+  text-align:center;
+  min-height:64px;
+  width:100%;max-width:380px;
+  box-shadow:0 4px 20px #00000066,inset 0 1px 0 #ffffff08;
+  position:relative;
+  overflow:hidden;
+}
+.spin-result-box::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 50% at 50% 0%,#c9913a0a,transparent);
+  pointer-events:none;
+}
+.spin-result-label{
+  font-family:var(--ff-mono);font-size:.56rem;
+  color:var(--text-dim);letter-spacing:.3em;
+  margin-bottom:5px;text-transform:uppercase;
+}
+.spin-result-value{
+  font-family:var(--ff-head);font-size:1.2rem;font-weight:700;
+  color:var(--gold-bright);
+  letter-spacing:.06em;
+  text-shadow:0 0 16px #c9913a66;
+}
+.spin-result-sub{
+  font-family:var(--ff-body);font-style:italic;
+  font-size:.73rem;color:var(--text-dim);margin-top:3px;
+  line-height:1.4;
+}
+
+/* SPIN BUTTON — dramatic */
+.spin-btn{
+  font-family:var(--ff-head);font-weight:700;font-size:.9rem;
+  letter-spacing:.2em;text-transform:uppercase;
+  padding:14px 48px;
+  background:linear-gradient(135deg,#3d0000 0%,#1a0000 50%,#3d0000 100%);
+  color:#ffcccc;
+  border:1px solid var(--crimson);
+  border-radius:var(--r);
+  cursor:pointer;
+  transition:all .2s ease;
+  box-shadow:var(--glow-blood),0 4px 20px #00000077;
+  position:relative;overflow:hidden;
+}
+.spin-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom,#ffffff0a 0%,transparent 50%);
+  pointer-events:none;
+}
+.spin-btn:hover{
+  background:linear-gradient(135deg,#5a0000 0%,#3d0000 50%,#5a0000 100%);
+  color:#fff;
+  box-shadow:0 0 30px #c0392b88,0 0 60px #c0392b33,0 4px 20px #00000077;
+  transform:translateY(-2px);
+}
+.spin-btn:active{transform:translateY(0);}
+.spin-btn:disabled{
+  background:linear-gradient(135deg,#1a1328,#120e1e);
+  color:var(--text-faint);
+  border-color:var(--rune);
+  box-shadow:none;transform:none;cursor:not-allowed;
+}
+
+/* stat pills */
+.stat-pills{
+  display:flex;gap:6px;flex-wrap:wrap;justify-content:center;
+  max-width:400px;
+}
+.stat-pill{
+  font-family:var(--ff-mono);font-size:.6rem;
+  padding:4px 10px;border-radius:3px;
+  background:#1a1328;
+  border:1px solid var(--rune);
+  display:flex;gap:6px;align-items:center;
+  color:var(--text-dim);
+}
+.stat-pill b{color:var(--gold-bright);}
+
+/* ═══════════════════════════════════════════════════════
+   ARENA SCREEN
+═══════════════════════════════════════════════════════ */
+#screen-arena{
+  background:var(--void);padding:0;justify-content:flex-start;
+}
+
+/* HUD top bar */
+.arena-top{
+  width:100%;
+  background:linear-gradient(to right,#0d0010,#0d0916,#000d0a);
+  padding:10px 14px;
+  display:flex;justify-content:space-between;align-items:flex-start;
+  border-bottom:1px solid var(--rune);
+  gap:8px;
+  box-shadow:0 2px 16px #00000077;
+}
+.hud-player{flex:1;}
+.hud-name{
+  font-family:var(--ff-head);
+  font-size:.82rem;font-weight:700;
+  letter-spacing:.1em;
+  margin-bottom:3px;text-shadow:0 0 10px currentColor;
+}
+.hud-name.p1{color:var(--crimson-bright);}
+.hud-name.p2{color:var(--arcane-glow);}
+
+/* HP bar — thick ornate style */
+.hud-hp-bar{
+  height:10px;
+  background:#0a0a0f;
+  border-radius:2px;
+  overflow:hidden;
+  margin-bottom:4px;
+  border:1px solid #ffffff10;
+  box-shadow:inset 0 1px 3px #00000066;
+}
+.hud-hp-fill{height:100%;border-radius:1px;transition:width .2s ease;}
+.hud-hp-fill.p1{
+  background:linear-gradient(90deg,#8b0000,var(--crimson-bright));
+  box-shadow:0 0 8px #c0392b88;
+}
+.hud-hp-fill.p2{
+  background:linear-gradient(90deg,var(--arcane),var(--arcane-glow));
+  box-shadow:0 0 8px #2a9d8f88;
+}
+.hud-hp-text{
+  font-family:var(--ff-mono);font-size:.56rem;
+  color:var(--text-dim);letter-spacing:.05em;
+}
+.hud-stats-row{display:flex;gap:5px;margin-top:3px;flex-wrap:wrap;}
+.hud-stat{
+  font-family:var(--ff-mono);font-size:.54rem;
+  color:var(--text-faint);letter-spacing:.04em;
+}
+.hud-stat b{color:var(--text-primary);}
+
+.hud-vs{
+  font-family:var(--ff-title);font-size:.75rem;font-weight:700;
+  color:var(--gold);
+  padding:0 6px;align-self:center;
+  text-shadow:var(--glow-gold);
+  letter-spacing:.2em;
+}
+
+/* ─── ARENA MAIN ──────────────────────────────────────── */
+.arena-main{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  padding:10px 12px;gap:10px;width:100%;
+}
+.arena-frame{
+  position:relative;
+  border:2px solid var(--rune);
+  border-radius:var(--r-lg);
+  background:#080612;
+  overflow:hidden;
+  box-shadow:
+    0 0 40px #c0392b18,
+    0 0 80px #2980b90a,
+    0 0 0 4px #1a1328,
+    0 0 0 5px var(--rune)44;
+}
+/* corner rune marks on arena */
+.arena-frame::before,.arena-frame::after{
+  content:'◈';
+  position:absolute;font-size:.6rem;color:var(--gold);opacity:.3;z-index:5;
+}
+.arena-frame::before{top:6px;left:8px;}
+.arena-frame::after{top:6px;right:8px;}
+#arenaCanvas{display:block;}
+
+/* Combat log — grimoire scroll */
+.arena-log{
+  width:100%;max-width:600px;
+  background:linear-gradient(135deg,#100c1e 0%,#0d0916 100%);
+  border:1px solid var(--rune);
+  border-radius:var(--r);
+  padding:8px 12px;
+  height:96px;overflow-y:auto;
+  font-family:var(--ff-mono);font-size:.6rem;line-height:1.8;
+  box-shadow:inset 0 2px 8px #00000066,0 2px 8px #00000044;
+}
+.arena-log::-webkit-scrollbar{width:3px;}
+.arena-log::-webkit-scrollbar-track{background:#1a1328;}
+.arena-log::-webkit-scrollbar-thumb{background:var(--rune-bright);border-radius:2px;}
+.log-hit{color:var(--text-primary);}
+.log-p1{color:var(--crimson-bright);}
+.log-p2{color:var(--arcane-glow);}
+.log-event{color:var(--gold-bright);}
+.log-parry{color:#a08cff;}
+
+/* arena control buttons */
+.arena-controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+.arena-btn{
+  font-family:var(--ff-head);font-weight:600;font-size:.72rem;
+  letter-spacing:.1em;
+  padding:10px 22px;
+  border:1px solid var(--rune);
+  border-radius:var(--r);cursor:pointer;
+  background:linear-gradient(135deg,var(--stone-light),var(--stone));
+  color:var(--text-primary);
+  transition:all .18s;
+  box-shadow:0 2px 8px #00000066;
+}
+.arena-btn:hover{
+  border-color:var(--gold);color:var(--gold-pale);
+  box-shadow:var(--glow-gold),0 2px 8px #00000066;
+  transform:translateY(-1px);
+}
+.arena-btn.primary{
+  background:linear-gradient(135deg,#1a3d1a 0%,#0d200d 100%);
+  border-color:#2a7a2a;color:#88ff88;
+  box-shadow:0 0 18px #2a7a2a44,0 2px 8px #00000066;
+}
+.arena-btn.primary:hover{
+  background:linear-gradient(135deg,#256025,#1a3d1a);
+  box-shadow:0 0 28px #2a7a2a77,0 2px 8px #00000066;
+  transform:translateY(-1px);
+}
+
+/* ─── RESULT OVERLAY ─────────────────────────────────── */
+#resultOverlay{
+  display:none;position:absolute;inset:0;
+  background:rgba(5,3,10,.92);
+  align-items:center;justify-content:center;flex-direction:column;gap:18px;
+  backdrop-filter:blur(6px);
+  z-index:10;
+}
+#resultOverlay.show{display:flex;}
+
+/* Ornate frame for result */
+.result-inner{
+  border:1px solid var(--gold)44;
+  background:linear-gradient(135deg,#1a1328 0%,#0d0916 100%);
+  border-radius:var(--r-lg);
+  padding:30px 44px;
+  text-align:center;
+  box-shadow:var(--glow-gold),0 8px 40px #00000099;
+  position:relative;
+}
+.result-inner::before,.result-inner::after{
+  content:'✦';font-size:.7rem;color:var(--gold);
+  position:absolute;
+}
+.result-inner::before{top:10px;left:14px;opacity:.5;}
+.result-inner::after{bottom:10px;right:14px;opacity:.5;}
+
+.result-title{
+  font-family:var(--ff-title);
+  font-size:clamp(1.2rem,5vw,2rem);
+  font-weight:700;
+  letter-spacing:.08em;
+  text-align:center;
+  animation:pulse 1.8s ease-in-out infinite;
+  text-shadow:0 0 30px currentColor;
+  margin-bottom:4px;
+}
+.result-title.p1{color:var(--crimson-bright);}
+.result-title.p2{color:var(--arcane-glow);}
+.result-title.draw{color:var(--gold-bright);}
+
+.result-crown{
+  font-size:1.6rem;margin-bottom:8px;
+  filter:drop-shadow(0 0 8px #c9913a88);
+  animation:floatUp 2s ease-in-out infinite;
+}
+@keyframes floatUp{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
+
+.result-reason{
+  font-family:var(--ff-mono);font-size:.62rem;
+  color:var(--text-dim);text-align:center;
+  letter-spacing:.08em;margin-top:6px;
+}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+/* result buttons */
+.result-btns{display:flex;gap:10px;margin-top:18px;justify-content:center;}
+.result-btn{
+  font-family:var(--ff-head);font-weight:600;font-size:.72rem;
+  letter-spacing:.12em;
+  padding:10px 22px;border-radius:var(--r);
+  border:1px solid var(--rune);
+  cursor:pointer;
+  background:linear-gradient(135deg,var(--stone-light),var(--stone));
+  color:var(--text-primary);
+  transition:all .18s;
+  box-shadow:0 2px 8px #00000066;
+}
+.result-btn:hover{border-color:var(--gold);color:var(--gold-pale);box-shadow:var(--glow-gold);}
+.result-btn.primary{
+  background:linear-gradient(135deg,#2a1800,#1a1000);
+  border-color:var(--gold);color:var(--gold-pale);
+}
+
+/* ─── TOAST ──────────────────────────────────────────── */
+.toast{
+  position:fixed;bottom:24px;right:20px;z-index:999;
+  background:linear-gradient(135deg,#1a1328,#0d0916);
+  color:var(--text-primary);
+  font-family:var(--ff-mono);font-size:.65rem;
+  padding:10px 16px;
+  border-radius:var(--r);
+  border:1px solid var(--rune);
+  box-shadow:0 4px 20px #00000088;
+  opacity:0;transform:translateY(8px);transition:all .2s;
+  max-width:260px;line-height:1.5;
+}
+.toast.show{opacity:1;transform:none;}
+
+/* ─── SCROLLBAR GLOBAL ────────────────────────────────── */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--abyss);}
+::-webkit-scrollbar-thumb{background:var(--rune-bright);border-radius:2px;}
+
+/* ─── RESPONSIVE ─────────────────────────────────────── */
+@media(max-width:500px){
+  .player-slots{grid-template-columns:1fr;}
+  .upload-card{padding:28px 24px;}
+  .spin-result-box{padding:12px 14px;}
+  .spin-btn{padding:12px 32px;}
+  .hud-vs{font-size:.6rem;}
+  .result-inner{padding:22px 24px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LANDING ══════════════ -->
+<div id="screen-landing" class="screen active">
+  <div class="landing-ornament">✦ &nbsp; T H E &nbsp; G R I M O I R E &nbsp; O F &nbsp; F A T E &nbsp; ✦</div>
+
+  <div class="landing-logo">
+    <span class="landing-logo-lim">Lim</span>
+    <span class="landing-logo-ball">Ball</span>
+  </div>
+  <div class="landing-sub">Every Choice, Every Clash · The Path Written By You</div>
+
+  <div class="rune-divider" style="max-width:320px;margin-bottom:28px;">
+    <span>✦ ✦ ✦</span>
+  </div>
+
+  <label class="upload-card" id="uploadZone">
+    <input type="file" id="xlsxInput" accept=".xlsx,.xls">
+    <div class="upload-icon">📜</div>
+    <div class="upload-label">Nạp Bảng Dữ Liệu</div>
+    <div class="upload-hint">
+      Chọn file <em>meobal.xlsx</em> để triệu hồi<br>các chiến binh vào Grimoire
+    </div>
+  </label>
+  <div class="upload-status" id="uploadStatus">— Chưa có dữ liệu —</div>
+
+  <div class="landing-version">LIMBALL · v0.2 · DARK FANTASY EDITION</div>
+</div>
+
+<!-- ══════════════ SELECT ══════════════ -->
+<div id="screen-select" class="screen">
+  <div class="section-title" style="margin-top:8px;">Chọn Chiến Binh</div>
+  <div class="rune-divider" style="max-width:360px;">
+    <span>mỗi người thực hiện vòng quay riêng</span>
+  </div>
+
+  <div class="player-slots" id="playerSlots" style="margin-top:4px;">
+    <div class="player-slot" id="slot0">
+      <div class="slot-label">✦ PLAYER 1</div>
+      <div class="slot-empty">Chưa có nhân vật<br><span style="font-size:.75rem;font-family:var(--ff-mono);color:var(--text-faint);">Nhấn "Triệu Hồi P1"</span></div>
+    </div>
+    <div class="player-slot" id="slot1">
+      <div class="slot-label">✦ PLAYER 2</div>
+      <div class="slot-empty">Chưa có nhân vật<br><span style="font-size:.75rem;font-family:var(--ff-mono);color:var(--text-faint);">Nhấn "Triệu Hồi P2"</span></div>
+    </div>
+  </div>
+
+  <div class="btn-row" style="margin-top:16px;">
+    <button class="btn" onclick="startSpin(0)">⚗ Triệu Hồi P1</button>
+    <button class="btn" onclick="startSpin(1)">⚗ Triệu Hồi P2</button>
+    <button class="btn btn-primary" id="btnFight" disabled onclick="startArena()">⚔ Khai Chiến!</button>
+  </div>
+  <button class="btn" style="margin-top:10px;font-size:.68rem;" onclick="show('screen-landing')">← Quay lại Grimoire</button>
+</div>
+
+<!-- ══════════════ SPIN ══════════════ -->
+<div id="screen-spin" class="screen">
+  <div class="spin-header">
+    <div class="spin-header-left">
+      <div class="spin-player-label" id="spinPlayerLabel">PLAYER 1</div>
+      <div class="spin-player-race" id="spinRaceDisplay">—</div>
+    </div>
+    <div class="spin-step-label" id="spinStepLabel">VÒNG QUAY TỘC</div>
+  </div>
+
+  <div class="spin-body">
+    <div class="stat-pills" id="statPills"></div>
+
+    <div class="wheel-wrap">
+      <canvas id="spinCanvas" width="440" height="440"></canvas>
+      <div class="wheel-outer-ring"></div>
+      <div class="wheel-pointer"></div>
+      <div class="wheel-center">✦</div>
+    </div>
+
+    <div class="spin-result-box">
+      <div class="spin-result-label" id="resultLabel">Nhấn Quay Để Bắt Đầu</div>
+      <div class="spin-result-value" id="resultValue">?</div>
+      <div class="spin-result-sub" id="resultSub"></div>
+    </div>
+
+    <button class="spin-btn" id="spinBtn" onclick="doSpin()">✦ QUAY ✦</button>
+  </div>
+</div>
+
+<!-- ══════════════ ARENA ══════════════ -->
+<div id="screen-arena" class="screen">
+  <div class="arena-top">
+    <div class="hud-player" id="hudP1">
+      <div class="hud-name p1" id="hudP1Name">—</div>
+      <div class="hud-hp-bar"><div class="hud-hp-fill p1" id="hpBar1" style="width:100%"></div></div>
+      <div class="hud-hp-text" id="hpText1">HP: —</div>
+      <div class="hud-stats-row" id="statsRow1"></div>
+    </div>
+    <div class="hud-vs">VS</div>
+    <div class="hud-player" id="hudP2" style="text-align:right;">
+      <div class="hud-name p2" id="hudP2Name">—</div>
+      <div class="hud-hp-bar"><div class="hud-hp-fill p2" id="hpBar2" style="width:100%"></div></div>
+      <div class="hud-hp-text" id="hpText2">HP: —</div>
+      <div class="hud-stats-row" id="statsRow2" style="justify-content:flex-end;"></div>
+    </div>
+  </div>
+
+  <div class="arena-main">
+    <div class="arena-frame" id="arenaFrame">
+      <canvas id="arenaCanvas"></canvas>
+      <div id="resultOverlay">
+        <div class="result-inner">
+          <div class="result-crown">👑</div>
+          <div class="result-title" id="resultTitle">—</div>
+          <div class="result-reason" id="resultReason"></div>
+          <div class="result-btns">
+            <button class="result-btn primary" onclick="show('screen-select')">⚔ Rematch</button>
+            <button class="result-btn" onclick="show('screen-landing')">← Menu</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arena-log" id="arenaLog">
+      <span style="color:var(--text-faint);font-family:var(--ff-body);font-style:italic;">Trận đấu sắp bắt đầu...</span>
+    </div>
+
+    <div class="arena-controls">
+      <button class="arena-btn primary" id="btnStart" onclick="beginFight()">▶ Bắt Đầu</button>
+      <button class="arena-btn" onclick="show('screen-select')">← Quay lại</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  DATA LAYER — parse xlsx
+// ══════════════════════════════════════════════════════
+let GD = null; // GameData
+
+const _n = v=>{
+  if(v==null) return null;
+  const s=String(v).trim().toLowerCase();
+  if(s===''||s==='nan'||s==='x') return null;
+  const n=parseFloat(v); return isNaN(n)?null:n;
+};
+const _s = v=>v==null?'':String(v).trim();
+const _ok = v=>v!=null&&String(v).trim()!==''&&String(v).trim().toLowerCase()!=='nan';
+
+function getWS(wb,name){
+  return wb.Sheets[name]||wb.Sheets[Object.keys(wb.Sheets).find(k=>k.trim()===name.trim())];
+}
+function toArr(ws){return XLSX.utils.sheet_to_json(ws,{header:1,defval:null});}
+
+function parseStatSheet(ws){
+  if(!ws) return {};
+  const d=toArr(ws);
+  const hi=d.findIndex(r=>r&&r.some(c=>_s(c).toLowerCase()==='race'));
+  if(hi<0) return {};
+  const races=d[hi].slice(1).map(_s).filter(Boolean);
+  const res={}; races.forEach(r=>{res[r]=[];});
+  for(let i=hi+1;i<d.length;i++){
+    const row=d[i]; if(!row) continue;
+    const lv=_n(row[0]); if(lv===null) continue;
+    races.forEach((r,j)=>res[r].push({level:lv,weight:_n(row[j+1])}));
+  }
+  return res;
+}
+
+function parseRaces(ws){
+  if(!ws) return [];
+  return toArr(ws)
+    .filter(r=>r&&_ok(r[0])&&_s(r[0]).toLowerCase()!=='race')
+    .map(r=>({race:_s(r[0]),weight:_n(r[1])||0,subWheel:_s(r[2]),trait:_s(r[3])}))
+    .filter(r=>r.weight>0);
+}
+
+function parseSubraces(ws){
+  if(!ws) return {};
+  const data=toArr(ws);
+  if(!data.length) return {};
+  const res={};
+  const row0=data[0]||[];
+
+  const SKIP=new Set(['type','stt','trọng số','đặc điểm','hiệu ứng',
+    'werebeast',"dragon's type","god's gift","god's gifts",
+    'angel rank','màu da','elemental','số lượng','alien nào?',
+    'body count',"demon's sin",'nan','']);
+
+  // Scan row 0 for wheel titles — all blocks start at row 0
+  for(let tc=0;tc<row0.length;tc++){
+    const title=_s(row0[tc]);
+    if(!title||title.toLowerCase()==='nan') continue;
+    if(!isNaN(parseFloat(title))) continue;
+    if(res[title]) continue; // already parsed (avoid duplicate Troll's Type)
+
+    // Standard layout: title@tc, stt@tc, item@tc+1, weight@tc+2, effect@tc+3
+    const items=[];
+    for(let r=2;r<data.length;r++){
+      const row=data[r]; if(!row) continue;
+      const itemCell=row[tc+1], wCell=row[tc+2];
+      if(!_ok(itemCell)&&!_ok(row[tc])) break;
+      const itemS=_s(itemCell);
+      if(SKIP.has(itemS.toLowerCase())) continue;
+      const w=_n(wCell); if(w===null||w<=0) continue;
+      const label=itemCell instanceof Date ? String(itemCell.getDate()) : itemS;
+      if(!label) continue;
+      items.push({item:label, weight:w, effect:_s(row[tc+3]||'')});
+    }
+
+    if(items.length>0){
+      // Col-55 mislabeled fix: if items look like vampire blood type → rename
+      const isVampBlood=items.every(x=>
+        ['red','white','black','pale','trắng','vàng','đen'].includes(x.item.toLowerCase()));
+      res[isVampBlood ? 'Khẩu vị độc đáo' : title] = items;
+      continue;
+    }
+
+    // Ben10-style: title@tc but data items ALSO at tc (stt@tc-1)
+    const itemsB=[];
+    for(let r=2;r<data.length;r++){
+      const row=data[r]; if(!row) continue;
+      const itemCell=row[tc], wCell=row[tc+1];
+      const itemS=_s(itemCell);
+      if(SKIP.has(itemS.toLowerCase())) continue;
+      if(!_ok(itemCell)) break;
+      const w=_n(wCell); if(w===null||w<=0) continue;
+      itemsB.push({item:itemS, weight:w, effect:_s(row[tc+2]||'')});
+    }
+    if(itemsB.length>0) res[title]=itemsB;
+  }
+  return res;
+}
+
+// Alias: Race sheet "Sub-race Wheel?" value → actual Subrace sheet key
+const SUBRACE_ALIAS={
+  "sins wheel":         "Sin Wheel",
+  "sin wheel":          "Sin Wheel",
+  "god's gifts":        "God's Gift",
+  "god's gift":         "God's Gift",
+  "which god?":         "God's Gift",
+  "dwarf's type":       "Dwarf Type",
+  "dwarf type":         "Dwarf Type",
+  "body count":         "Body Count",
+  "khẩu vị độc đáo":   "Khẩu vị độc đáo",
+  "ben 10":             "Ben10",
+  "ben10":              "Ben10",
+  "bone lineage":       null,
+  "bone leniage":       null,
+  "quay 1 robot":       null,
+  "damage type":        null,
+};
+
+function resolveSubraceKey(name,subraces){
+  const lo=_s(name).toLowerCase().trim();
+  if(!lo||lo.includes('không có')||lo.includes('💀')
+     ||lo==='x'||lo==='none') return null;
+  if(Object.prototype.hasOwnProperty.call(SUBRACE_ALIAS,lo))
+    return SUBRACE_ALIAS[lo];
+  return Object.keys(subraces).find(k=>k.toLowerCase()===lo)||null;
+}
+
+function parseSkillWheel(ws){
+  if(!ws) return {};
+  const d=toArr(ws); const res={};
+  for(let r=0;r<d.length;r++){
+    const row=d[r]; if(!row) continue;
+    if(!row.some(c=>_s(c).toLowerCase()==='race')) continue;
+    const blocks=[];
+    for(let c=0;c<row.length;c++)
+      if(_s(row[c]).toLowerCase()==='race'&&_ok(row[c+1])) blocks.push({col:c,race:_s(row[c+1])});
+    let dr=r+1;
+    while(dr<d.length){
+      const drow=d[dr]; if(!drow){dr++;continue;}
+      if(drow.some(c=>_s(c).toLowerCase()==='race')) break;
+      for(const{col,race}of blocks){
+        const sc=_n(drow[col]),sw=_n(drow[col+1]);
+        if(sc===null||sw===null) continue;
+        if(!res[race]) res[race]=[];
+        res[race].push({skillCount:sc,weight:sw});
+      }
+      dr++;
+    }
+  }
+  return res;
+}
+
+function parseSkills(ws){
+  if(!ws) return [];
+  return toArr(ws).filter(r=>r&&_n(r[0])!==null)
+    .map(r=>({id:_n(r[0]),name:_s(r[1]),weight:_n(r[2])||4,effect:_s(r[3])}));
+}
+
+function parseGear(ws){
+  if(!ws) return [];
+  return toArr(ws).filter(r=>r&&_n(r[0])!==null)
+    .map(r=>({id:_n(r[0]),name:_s(r[1]),weight:_n(r[2])||2.63,effect:_s(r[3]),type:_s(r[4])}));
+}
+
+function parseGearWheel(ws){
+  if(!ws) return [];
+  const d=toArr(ws);
+  return d.filter(r=>r&&_ok(r[0])&&!_s(r[0]).includes('Số'))
+    .map(r=>{const m=_s(r[0]).match(/(\d+)/);return{gearCount:m?parseInt(m[1]):0,weight:_n(r[1])||1};})
+    .filter(r=>r.weight>0);
+}
+
+function parseWeaponWheel(ws){
+  if(!ws) return [{item:'Có',weight:70},{item:'Không',weight:30}];
+  const d=toArr(ws);
+  const res=[];
+  for(const row of d){
+    if(!row) continue;
+    const item=_s(row[0]);
+    if(!item||item.includes('?')||item.toLowerCase().includes('hiệu')) continue;
+    const w=_n(row[2])??_n(row[1]); if(w===null) continue;
+    res.push({item,weight:w});
+  }
+  return res.length?res:[{item:'Có',weight:70},{item:'Không',weight:30}];
+}
+
+function parseWeapons(ws){
+  if(!ws) return [];
+  const d=toArr(ws);
+  if(!d.length) return [];
+  const hdr=d[0]||[];
+  const lvLabels=hdr.slice(1,11).map(_s);
+  return d.slice(1).filter(r=>r&&_ok(r[0])&&_s(r[0]).toLowerCase()!=='nan').map(r=>{
+    const milestones={};
+    for(let i=0;i<10;i++){const e=_s(r[i+1]);if(e)milestones[i+1]={label:lvLabels[i]||`Lv${i+1}`,effect:e};}
+    return{name:_s(r[0]),category:_s(r[11]),milestones,scale:_s(r[13])};
+  });
+}
+
+function doParse(wb){
+  return{
+    Races:parseRaces(getWS(wb,'Race')),
+    Subraces:parseSubraces(getWS(wb,'Subrace')),
+    Stats:{
+      ATK:parseStatSheet(getWS(wb,'ATK')),
+      HP:parseStatSheet(getWS(wb,'HP')),
+      SPD:parseStatSheet(getWS(wb,'SPD')),
+      IQ:parseStatSheet(getWS(wb,'IQ')),
+      BIQ:parseStatSheet(getWS(wb,'BIQ')),
+      MA:parseStatSheet(getWS(wb,'Weapon Mastery Martial Arts')),
+    },
+    SkillWheel:parseSkillWheel(getWS(wb,'Skill Wheel')),
+    Skills:parseSkills(getWS(wb,'Skill')),
+    Gear:parseGear(getWS(wb,'Gear')),
+    GearWheel:parseGearWheel(getWS(wb,'Gear Wheel')),
+    WeaponWheel:parseWeaponWheel(getWS(wb,'Weapon wheel ')),
+    Weapons:parseWeapons(getWS(wb,'Weapons')),
+  };
+}
+
+// ══════════════════════════════════════════════════════
+//  GACHA ENGINE
+// ══════════════════════════════════════════════════════
+function spin(slices){
+  const v=slices.filter(s=>parseFloat(s.weight)>0&&!isNaN(parseFloat(s.weight)));
+  if(!v.length) return null;
+  let t=v.reduce((s,x)=>s+parseFloat(x.weight),0),r=Math.random()*t;
+  for(const s of v){r-=parseFloat(s.weight);if(r<0)return s;}
+  return v[v.length-1];
+}
+
+function spinStat(tbl,race){
+  const k=Object.keys(tbl).find(x=>x.toLowerCase()===race.toLowerCase());
+  if(!k) return 1;
+  const sl=tbl[k].filter(s=>s.weight!==null&&s.weight>0).map(s=>({item:s.level,weight:s.weight}));
+  return sl.length?spin(sl).item:1;
+}
+
+function sampleNR(list,count){
+  const pool=[...list],out=[];
+  for(let i=0;i<count&&pool.length;i++){
+    const r=spin(pool); if(!r) break;
+    out.push(r);
+    pool.splice(pool.findIndex(x=>x.item===r.item),1);
+  }
+  return out;
+}
+
+// Apply gear effects to stats
+function applyGearEffects(char){
+  for(const g of char.gears){
+    const e=g.effect.toLowerCase();
+    if(e.includes('+2 speed')||e.includes('+2 speed')) char.stats.SPD=Math.max(1,char.stats.SPD+2);
+    if(e.includes('+2 hp')) char.stats.HP=Math.max(1,char.stats.HP+2);
+    if(e.includes('+1 iq')) char.stats.IQ=Math.max(1,char.stats.IQ+1);
+    if(e.includes('+3 iq')) char.stats.IQ=Math.max(1,char.stats.IQ+3);
+    if(e.includes('+1 biq')) char.stats.BIQ=Math.max(1,char.stats.BIQ+1);
+    if(e.includes('+3 biq')) char.stats.BIQ=Math.max(1,char.stats.BIQ+3);
+    if(e.includes('+1 iq') && e.includes('+2 biq')){char.stats.IQ=Math.max(1,char.stats.IQ+1);char.stats.BIQ=Math.max(1,char.stats.BIQ+2);}
+    if(e.includes('+3 atk')&&e.includes('+3 hp')){char.stats.ATK=Math.max(1,char.stats.ATK+3);char.stats.HP=Math.max(1,char.stats.HP+3);}
+    if(e.includes('+1 atk')&&e.includes('+1 hp')){char.stats.ATK=Math.max(1,char.stats.ATK+1);char.stats.HP=Math.max(1,char.stats.HP+1);}
+    if(e.includes('-2 speed')||e.includes('-2 speed')) char.stats.SPD=Math.max(1,char.stats.SPD-2);
+    if(e.includes('-1 iq')&&e.includes('-1 biq')){char.stats.IQ=Math.max(1,char.stats.IQ-1);char.stats.BIQ=Math.max(1,char.stats.BIQ-1);}
+    if(e.includes('+4 atk')&&e.includes('+4 hp')){char.stats.ATK=Math.max(1,char.stats.ATK+4);char.stats.HP=Math.max(1,char.stats.HP+4);}
+    if(e.includes('+1 hp')&&e.includes('-1 iq')) {char.stats.HP=Math.max(1,char.stats.HP+1);char.stats.IQ=Math.max(1,char.stats.IQ-1);}
+  }
+  // Swinging Maestro skill
+  for(const sk of char.skills){
+    if(sk.name==='Swinging Maestro') char.stats.BIQ=Math.max(1,char.stats.BIQ+4);
+    if(sk.name==='Enlarging'){char.stats.ATK=Math.max(1,char.stats.ATK+3);char.stats.HP=Math.max(1,char.stats.HP+3);char.stats.SPD=Math.max(1,char.stats.SPD-6);}
+    if(sk.name==='Shrinking'){char.stats.SPD=Math.max(1,char.stats.SPD+6);char.stats.ATK=Math.max(1,char.stats.ATK-3);char.stats.HP=Math.max(1,char.stats.HP-3);}
+    if(sk.name==='Healing Factor') char.stats.HP=Math.max(1,char.stats.HP+1);
+  }
+  // Weapon Mastery milestones
+  if(char.weapon){
+    const ma=char.stats.MA;
+    const mkeys=Object.keys(char.weapon.milestones).map(Number).filter(k=>k<=ma);
+    if(mkeys.length){
+      const mk=Math.max(...mkeys);
+      const eff=char.weapon.milestones[mk].effect.toLowerCase();
+      if(eff.includes('+1 atk')) char.stats.ATK=Math.max(1,char.stats.ATK+1);
+      if(eff.includes('+2 atk')) char.stats.ATK=Math.max(1,char.stats.ATK+2);
+      if(eff.includes('+1 speed')||eff.includes('+1 spd')) char.stats.SPD=Math.max(1,char.stats.SPD+1);
+      if(eff.includes('+2 speed')) char.stats.SPD=Math.max(1,char.stats.SPD+2);
+      if(eff.includes('+1 biq')) char.stats.BIQ=Math.max(1,char.stats.BIQ+1);
+      if(eff.includes('+2 biq')) char.stats.BIQ=Math.max(1,char.stats.BIQ+2);
+    }
+    char.weaponMasteryEffect=mkeys.length?char.weapon.milestones[Math.max(...mkeys)]:null;
+  }
+  // enforce minimums
+  ['ATK','HP','SPD','BIQ'].forEach(k=>char.stats[k]=Math.max(1,char.stats[k]));
+  return char;
+}
+
+// ══════════════════════════════════════════════════════
+//  SPIN FLOW STATE MACHINE
+// ══════════════════════════════════════════════════════
+const SPIN_STEPS=[
+  'race','subrace','atk','hp','spd','iq','biq','ma',
+  'gear_count','gear','skill_count','skill','weapon','weapon_pick','done'
+];
+
+let spinState={
+  playerIdx:0,
+  step:0,
+  char:null,
+  pendingGearCount:0,
+  pendingSkillCount:0,
+  pendingWeapon:false,
+  stepKey:'race',
+};
+
+let players=[null,null];
+
+// Wheel canvas
+const spinCanvas=document.getElementById('spinCanvas');
+const spinCtx=spinCanvas.getContext('2d');
+let wheelSlices=[];
+let wheelAngle=0;
+let wheelSpin=false;
+let wheelVel=0;
+let wheelTarget=0;
+let wheelAnimId=null;
+let onSpinDone=null;
+
+function drawWheel(slices,angle){
+console.log("DRAW WHEEL");
+console.log(slices);
+  const W=spinCanvas.width,H=spinCanvas.height;
+  const cx=W/2,cy=H/2,r=cx-6;
+
+  spinCtx.save();
+
+  spinCtx.setTransform(1,0,0,1,0,0);
+  spinCtx.globalAlpha=1;
+  spinCtx.globalCompositeOperation='source-over';
+
+  spinCtx.clearRect(0,0,W,H);
+
+  if(!slices.length){
+    spinCtx.restore();
+    return;
+  }
+
+  const total=slices.reduce((sum,x)=>{
+    return sum + (Number(x.weight)||1);
+  },0);
+
+  const PALETTE=[
+    '#ff6b6b',
+    '#4ecdc4',
+    '#ffe66d',
+    '#5f27cd',
+    '#54a0ff',
+    '#1dd1a1',
+    '#ff9f43',
+    '#ee5253',
+    '#00d2d3',
+    '#f368e0'
+  ];
+
+  // background
+  spinCtx.beginPath();
+  spinCtx.arc(cx,cy,r+8,0,Math.PI*2);
+  spinCtx.fillStyle='#120f1f';
+  spinCtx.fill();
+
+  // outer ring
+  spinCtx.beginPath();
+  spinCtx.arc(cx,cy,r+4,0,Math.PI*2);
+  spinCtx.strokeStyle='rgba(255,220,120,0.45)';
+  spinCtx.lineWidth=5;
+  spinCtx.stroke();
+
+  let a=angle-Math.PI/2;
+
+  slices.forEach((s,i)=>{
+
+    const w = Number(s.weight)||1;
+    const theta = (w/total)*Math.PI*2;
+
+    spinCtx.beginPath();
+
+spinCtx.moveTo(cx,cy);
+
+spinCtx.arc(
+  cx,
+  cy,
+  r,
+  Number(a)||0,
+  Number(a+theta)||0,
+  false
+);
+
+spinCtx.lineTo(cx,cy);
+
+spinCtx.closePath();
+spinCtx.fillStyle = PALETTE[i % PALETTE.length] || "red";
+spinCtx.fill();
+    spinCtx.fillStyle=PALETTE[i%PALETTE.length];
+    spinCtx.fill();
+
+    spinCtx.strokeStyle='rgba(255,255,255,0.2)';
+    spinCtx.lineWidth=2;
+    spinCtx.stroke();
+
+    // text
+    const mid=a+theta/2;
+
+    spinCtx.save();
+
+    spinCtx.translate(
+      cx+Math.cos(mid)*r*0.65,
+      cy+Math.sin(mid)*r*0.65
+    );
+
+    spinCtx.rotate(mid+Math.PI/2);
+
+    const label=s.label||'?';
+
+    spinCtx.font='bold 18px Arial';
+    spinCtx.textAlign='center';
+    spinCtx.textBaseline='middle';
+
+    spinCtx.strokeStyle='black';
+    spinCtx.lineWidth=4;
+    spinCtx.strokeText(label,0,0);
+
+    spinCtx.fillStyle='white';
+    spinCtx.fillText(label,0,0);
+
+    spinCtx.restore();
+
+    a+=theta;
+  });
+
+  // center hub
+  spinCtx.beginPath();
+  spinCtx.arc(cx,cy,28,0,Math.PI*2);
+
+  spinCtx.fillStyle='#241b3d';
+  spinCtx.fill();
+
+  spinCtx.strokeStyle='rgba(255,220,120,0.5)';
+  spinCtx.lineWidth=3;
+  spinCtx.stroke();
+
+  spinCtx.restore();
+}
+
+// ─── SPIN SPEED TIERS ───────────────────────────────
+// Stat spins = mốc chuẩn (decay chậm, hồi hộp nhất)
+// Race/Subrace/Gear/Skill/Weapon = nhanh hơn (shorter ceremony)
+// GearCount/SkillCount/WeaponYesNo = rất nhanh (chỉ là lựa chọn phụ)
+const SPIN_SPEED = {
+  // [initialVel, decayRate]  — decay gần 1 = chậm dừng hơn
+  stat:         [0.26, 0.9942],  // mốc: ~4-5 giây
+  race:         [0.38, 0.9910],  // nhanh hơn stat ~40%
+  subrace:      [0.34, 0.9920],
+  gear:         [0.36, 0.9915],
+  skill:        [0.36, 0.9915],
+  weapon_pick:  [0.34, 0.9920],
+  fast:         [0.42, 0.9880],  // gear_count, skill_count, weapon yes/no
+};
+
+function getSpeedTier(stepKey){
+  if(['atk','hp','spd','iq','biq','ma'].includes(stepKey)) return SPIN_SPEED.stat;
+  if(stepKey==='race')         return SPIN_SPEED.race;
+  if(stepKey==='subrace')      return SPIN_SPEED.subrace;
+  if(stepKey==='gear')         return SPIN_SPEED.gear;
+  if(stepKey==='skill')        return SPIN_SPEED.skill;
+  if(stepKey==='weapon_pick')  return SPIN_SPEED.weapon_pick;
+  return SPIN_SPEED.fast; // gear_count, skill_count, weapon yes/no
+}
+
+let wheelDecay=0.9942; // current decay, set per spin
+
+function animateWheel(){
+  if(!wheelSpin) return;
+  wheelVel*=wheelDecay;
+  wheelAngle+=wheelVel;
+  drawWheel(wheelSlices,wheelAngle);
+  if(wheelVel<0.003){
+    wheelSpin=false;
+    const total=wheelSlices.reduce((s,x)=>s+x.weight,0);
+    let norm=(((-wheelAngle)%(Math.PI*2))+(Math.PI*2))%(Math.PI*2);
+    let a=0,winner=wheelSlices[0];
+    for(const s of wheelSlices){
+      const theta=(s.weight/total)*Math.PI*2;
+      if(norm>=a&&norm<a+theta){winner=s;break;}
+      a+=theta;
+    }
+    document.getElementById('spinBtn').disabled=false;
+    if(onSpinDone) onSpinDone(winner);
+    return;
+  }
+  wheelAnimId=requestAnimationFrame(animateWheel);
+}
+
+function triggerWheelSpin(slices,cb,stepKey){
+  wheelSlices=slices;
+  const [vel,decay]=getSpeedTier(stepKey||spinState.stepKey);
+  wheelVel=vel+Math.random()*0.06;
+  wheelDecay=decay;
+  wheelSpin=true;
+  onSpinDone=cb;
+  document.getElementById('spinBtn').disabled=true;
+  animateWheel();
+}
+
+// ─── Step helpers ───────────────────────────────────
+function makeStatSlices(tblKey,race){
+  const tbl=GD.Stats[tblKey];
+  const k=Object.keys(tbl).find(x=>x.toLowerCase()===race.toLowerCase());
+  if(!k) return [{item:1,weight:100,label:'1'}];
+  return tbl[k].filter(s=>s.weight!==null&&s.weight>0)
+    .map(s=>({item:s.level,weight:s.weight,label:String(s.level)}));
+}
+
+function getSubraceWheel(wheelName){
+  // find in Subraces
+  if(GD.Subraces[wheelName]) return GD.Subraces[wheelName].map(s=>({...s,label:s.item}));
+  return null;
+}
+
+function updateStatPills(char){
+  const el=document.getElementById('statPills');
+  if(!char){el.innerHTML='';return;}
+  const s=char.stats;
+  const pairs=[['ATK',s.ATK],['HP',s.HP*10],['SPD',s.SPD],['IQ',s.IQ],['BIQ',s.BIQ],['MA',s.MA]];
+  el.innerHTML=pairs.map(([k,v])=>
+    `<div class="stat-pill">${k} <b>${v??'?'}</b></div>`
+  ).join('');
+}
+
+const STEP_LABELS={
+  race:'VÒNG QUAY TỘC',subrace:'VÒNG QUAY PHỤ TỘC',
+  atk:'VÒNG QUAY ATK',hp:'VÒNG QUAY HP',spd:'VÒNG QUAY SPD',
+  iq:'VÒNG QUAY IQ',biq:'VÒNG QUAY BIQ',ma:'VÒNG QUAY WEAPON MASTERY',
+  gear_count:'SỐ LƯỢNG GEAR',gear:'VÒNG QUAY GEAR',
+  skill_count:'SỐ LƯỢNG SKILL',skill:'VÒNG QUAY SKILL',
+  weapon:'CÓ VŨ KHÍ KHÔNG?',weapon_pick:'CHỌN VŨ KHÍ',done:'HOÀN TẤT',
+};
+
+function advanceSpin(winner){
+  const st=spinState;
+  const char=st.char;
+  let nextKey=null;
+
+  if(st.stepKey==='race'){
+    char.race=winner.race||winner.item;
+    document.getElementById('spinRaceDisplay').textContent=char.race;
+    // Special: Skeleton IQ fixed 1
+    char._skeletonIQ=char.race.toLowerCase()==='skeleton';
+    // Special: Alien can't have weapon
+    char._alienNoWeapon=char.race.toLowerCase()==='alien';
+    // Check subrace per race using alias map
+    const raceInfo=GD.Races.find(r=>r.race===char.race);
+    const subWheelName=(raceInfo?.subWheel||'').trim();
+    const resolvedKey=resolveSubraceKey(subWheelName, GD.Subraces);
+    if(resolvedKey && GD.Subraces[resolvedKey] && GD.Subraces[resolvedKey].length>0){
+      char._subraceWheelName=resolvedKey;
+      nextKey='subrace';
+    } else {
+      char.subrace=null;
+      nextKey='atk';
+    }
+    setResult('TỘC',char.race,raceInfo?.trait||'');
+  }
+  else if(st.stepKey==='subrace'){
+    char.subrace={name:winner.item,effect:winner.effect||''};
+    setResult('PHỤ TỘC',winner.item,winner.effect||'');
+    nextKey='atk';
+  }
+  else if(st.stepKey==='atk'){
+    char.stats.ATK=winner.item;
+    setResult('ATK',winner.item,'Sát thương mỗi đòn đánh');
+    nextKey='hp';
+  }
+  else if(st.stepKey==='hp'){
+    char.stats.HP=Math.max(1,winner.item);
+    setResult('HP',winner.item*10,'('+winner.item+' base × 10)');
+    nextKey='spd';
+  }
+  else if(st.stepKey==='spd'){
+    char.stats.SPD=Math.max(1,winner.item);
+    setResult('SPD',winner.item,'Tốc độ di chuyển & gia tốc');
+    nextKey='iq';
+  }
+  else if(st.stepKey==='iq'){
+    char.stats.IQ=char._skeletonIQ?1:Math.max(1,winner.item);
+    setResult('IQ',char.stats.IQ,char._skeletonIQ?'Skeleton IQ cố định = 1':'Giảm CD skill');
+    nextKey='biq';
+  }
+  else if(st.stepKey==='biq'){
+    char.stats.BIQ=Math.max(1,winner.item);
+    setResult('BIQ',winner.item,'Tốc độ vũ khí / parry');
+    nextKey='ma';
+  }
+  else if(st.stepKey==='ma'){
+    char.stats.MA=winner.item;
+    setResult('MASTERY',winner.item,'Khai mở buff vũ khí');
+    nextKey='gear_count';
+  }
+  else if(st.stepKey==='gear_count'){
+    st.pendingGearCount=winner.gearCount||winner.item||0;
+    char.gears=[];
+    setResult('SỐ GEAR',st.pendingGearCount,st.pendingGearCount===0?'Không có gear':'Sẽ quay '+st.pendingGearCount+' gear');
+    nextKey=st.pendingGearCount>0?'gear':'skill_count';
+    if(st.pendingGearCount>0) st._gearLeft=st.pendingGearCount;
+  }
+  else if(st.stepKey==='gear'){
+    char.gears.push({name:winner.item||winner.name,effect:winner.effect||'',type:winner.type||''});
+    st._gearLeft--;
+    setResult('GEAR',winner.item||winner.name,winner.effect||'');
+    nextKey=st._gearLeft>0?'gear':'skill_count';
+  }
+  else if(st.stepKey==='skill_count'){
+    st.pendingSkillCount=winner.skillCount??winner.item??0;
+    char.skills=[];
+    setResult('SỐ SKILL',st.pendingSkillCount,st.pendingSkillCount===0?'Không có skill':'Sẽ quay '+st.pendingSkillCount+' skill');
+    nextKey=st.pendingSkillCount>0?'skill':'weapon';
+    if(st.pendingSkillCount>0) st._skillLeft=st.pendingSkillCount;
+    else st._skillLeft=0;
+  }
+  else if(st.stepKey==='skill'){
+    char.skills.push({name:winner.item||winner.name,effect:winner.effect||''});
+    st._skillLeft--;
+    // remove from pool to avoid duplicates (handled via pool in loadStep)
+    setResult('SKILL',winner.item||winner.name,winner.effect||'');
+    nextKey=st._skillLeft>0?'skill':'weapon';
+  }
+  else if(st.stepKey==='weapon'){
+    st.pendingWeapon=(winner.item==='Có');
+    setResult(st.pendingWeapon?'CÓ VŨ KHÍ':'KHÔNG VŨ KHÍ',st.pendingWeapon?'✓':'✗','');
+    nextKey=st.pendingWeapon&&!char._alienNoWeapon?'weapon_pick':'done';
+  }
+  else if(st.stepKey==='weapon_pick'){
+    char.weapon={name:winner.item||winner.name,category:winner.category||'',milestones:winner.milestones||{},scale:winner.scale||''};
+    setResult('VŨ KHÍ',char.weapon.name,'['+char.weapon.category+'] '+char.weapon.scale);
+    nextKey='done';
+  }
+
+  if(nextKey==='done'||!nextKey){
+    applyGearEffects(char);
+    updateStatPills(char);
+    players[st.playerIdx]=char;
+    updateSlot(st.playerIdx,char);
+    document.getElementById('spinBtn').textContent='HOÀN TẤT ✓';
+    document.getElementById('spinBtn').onclick=()=>{
+      show('screen-select');
+      checkFightReady();
+    };
+    document.getElementById('spinBtn').disabled=false;
+    document.getElementById('spinStepLabel').textContent='HOÀN TẤT!';
+    setResult('HOÀN TẤT','✓','Nhấn nút để quay về');
+    drawWheel([],0);
+    return;
+  }
+
+  st.stepKey=nextKey;
+  document.getElementById('spinStepLabel').textContent=STEP_LABELS[nextKey]||nextKey.toUpperCase();
+  loadStep();
+}
+
+function loadStep(){
+  const st=spinState;
+  const char=st.char;
+  updateStatPills(char);
+
+  let slices=[];
+
+  if(st.stepKey==='race'){
+    slices=GD.Races.map(r=>({...r,label:r.race,item:r.race}));
+  }
+  else if(st.stepKey==='subrace'){
+    const wName=char._subraceWheelName||'';
+    const w=(wName&&GD.Subraces[wName])||[];
+    slices=w.length?w.map(s=>({...s,label:s.item})):[{item:'?',weight:1,label:'?'}];
+  }
+  else if(st.stepKey==='atk') slices=makeStatSlices('ATK',char.race);
+  else if(st.stepKey==='hp')  slices=makeStatSlices('HP', char.race);
+  else if(st.stepKey==='spd') slices=makeStatSlices('SPD',char.race);
+  else if(st.stepKey==='iq')  slices=makeStatSlices('IQ', char.race);
+  else if(st.stepKey==='biq') slices=makeStatSlices('BIQ',char.race);
+  else if(st.stepKey==='ma')  slices=makeStatSlices('MA', char.race);
+  else if(st.stepKey==='gear_count') slices=GD.GearWheel.map(g=>({...g,label:g.gearCount+'G'}));
+  else if(st.stepKey==='gear'){
+    const used=new Set(char.gears.map(g=>g.name));
+    slices=GD.Gear.filter(g=>!used.has(g.name)).map(g=>({...g,label:g.name,item:g.name}));
+  }
+  else if(st.stepKey==='skill_count'){
+    const k=Object.keys(GD.SkillWheel).find(x=>x.toLowerCase()===char.race.toLowerCase());
+    slices=k?GD.SkillWheel[k].map(s=>({...s,label:s.skillCount+'S'})):[{skillCount:0,weight:100,label:'0S'}];
+  }
+  else if(st.stepKey==='skill'){
+    const used=new Set(char.skills.map(s=>s.name));
+    slices=GD.Skills.filter(s=>!used.has(s.name)).map(s=>({...s,label:s.name,item:s.name}));
+  }
+  else if(st.stepKey==='weapon') slices=GD.WeaponWheel.map(w=>({...w,label:w.item}));
+  else if(st.stepKey==='weapon_pick') slices=GD.Weapons.filter(w=>_ok(w.name)).map(w=>({...w,label:w.name,item:w.name,weight:1}));
+
+  if(!slices.length) slices=[{item:'?',weight:1,label:'?'}];
+  wheelSlices=slices;
+
+  // Ensure Cinzel font is loaded before drawing text on canvas
+  const doDrawAndReady=()=>{
+    drawWheel(slices,wheelAngle);
+    document.getElementById('spinBtn').disabled=false;
+    document.getElementById('spinBtn').textContent='✦ QUAY ✦';
+    document.getElementById('spinBtn').onclick=doSpin;
+  };
+
+  if(document.fonts && document.fonts.load){
+    document.fonts.load('700 12px Cinzel').then(doDrawAndReady).catch(doDrawAndReady);
+  } else {
+    doDrawAndReady();
+  }
+}
+
+function doSpin(){
+  triggerWheelSpin(wheelSlices,advanceSpin,spinState.stepKey);
+}
+
+function setResult(label,val,sub){
+  document.getElementById('resultLabel').textContent=label;
+  document.getElementById('resultValue').textContent=val;
+  document.getElementById('resultSub').textContent=sub;
+}
+
+function startSpin(playerIdx){
+  spinState={
+    playerIdx,stepKey:'race',
+    char:{race:'',subrace:null,stats:{ATK:1,HP:1,SPD:1,IQ:1,BIQ:1,MA:1},skills:[],gears:[],weapon:null,_gearPool:[...GD.Gear],_skillPool:[...GD.Skills]},
+    _gearLeft:0,_skillLeft:0,pendingGearCount:0,pendingSkillCount:0,pendingWeapon:false,
+  };
+  document.getElementById('spinPlayerLabel').textContent=`PLAYER ${playerIdx+1}`;
+  document.getElementById('spinRaceDisplay').textContent='—';
+  document.getElementById('spinStepLabel').textContent=STEP_LABELS['race'];
+  document.getElementById('spinBtn').textContent='QUAY!';
+  document.getElementById('spinBtn').onclick=doSpin;
+  setResult('NHẤN QUAY ĐỂ BẮT ĐẦU','?','');
+  updateStatPills(null);
+  wheelAngle=0;
+  loadStep();
+  show('screen-spin');
+}
+
+// ══════════════════════════════════════════════════════
+//  SLOT CARDS
+// ══════════════════════════════════════════════════════
+function updateSlot(idx,char){
+  const el=document.getElementById('slot'+idx);
+  const s=char.stats;
+  const wpnTag=char.weapon?`<span class="slot-tag weapon">⚔ ${char.weapon.name}</span>`:'';
+  const skillTags=char.skills.map(sk=>`<span class="slot-tag skill">✦ ${sk.name}</span>`).join('');
+  const gearTags=char.gears.map(g=>`<span class="slot-tag gear">◈ ${g.name}</span>`).join('');
+  el.innerHTML=`
+    <div class="slot-label">PLAYER ${idx+1}</div>
+    <div class="slot-race">${char.race}${char.subrace?` · <span style="font-size:.8rem;font-weight:400;color:var(--text-dim)">${char.subrace.name}</span>`:''}</div>
+    <div class="slot-stats">
+      ATK <b>${s.ATK}</b> &nbsp; HP <b>${s.HP*10}</b> &nbsp; SPD <b>${s.SPD}</b><br>
+      IQ <b>${s.IQ}</b> &nbsp; BIQ <b>${s.BIQ}</b> &nbsp; MA <b>${s.MA}</b>
+    </div>
+    <div style="margin-top:6px;">${wpnTag}${skillTags}${gearTags}</div>`;
+}
+
+function checkFightReady(){
+  document.getElementById('btnFight').disabled=!(players[0]&&players[1]);
+}
+
+// ══════════════════════════════════════════════════════
+//  ARENA
+// ══════════════════════════════════════════════════════
+const arenaCanvas=document.getElementById('arenaCanvas');
+const actx=arenaCanvas.getContext('2d');
+let arenaW=500,arenaH=500;
+let arenaAnimId=null;
+let fightRunning=false;
+
+// Fighter state
+let fighters=[];
+let arenaTime=0;
+let lastFrameTime=0;
+let combatLog=[];
+let logEl;
+
+const P_COLORS=['#e63946','#2a9d8f'];
+const P_COLORS_LIGHT=['#ff6b6b','#4ecdc4'];
+
+function initFighters(){
+  return players.map((p,i)=>{
+    const s=p.stats;
+    const ATK=Math.max(1,s.ATK);
+    const HP=Math.max(1,s.HP)*10;
+    const SPD=Math.max(1,s.SPD);
+    const IQ=Math.max(0,s.IQ);
+    const BIQ=Math.max(1,s.BIQ);
+    const MA=Math.max(0,s.MA);
+    const armed=p.weapon!==null&&p.weapon!==undefined&&!p._alienNoWeapon;
+    const parryRate=armed?0:Math.min(BIQ*0.036,1);
+
+    // weapon mastery effect
+    let wepBuff=null;
+    if(armed&&p.weapon){
+      const mkeys=Object.keys(p.weapon.milestones||{}).map(Number).filter(k=>k<=MA);
+      if(mkeys.length) wepBuff=p.weapon.milestones[Math.max(...mkeys)];
+    }
+
+    // skill cooldowns
+    const skillCDs=p.skills.map(sk=>({
+      name:sk.name,effect:sk.effect,
+      cd:Math.max(0.5,10-IQ*0.2), // base 10s, reduce 0.2s per IQ
+      timer:0,active:false,stacks:0,
+    }));
+
+    const r=Math.max(22,arenaW*0.055);
+    const sx=i===0?arenaW*0.2:arenaW*0.8;
+
+    return{
+      idx:i,name:p.race,
+      ATK,maxHp:HP,curHp:HP,SPD,IQ,BIQ,MA,
+      armed,parryRate,wepBuff,
+      skills:skillCDs,
+      weapon:p.weapon,
+      x:sx,
+      y:arenaH/2+((Math.random()-.5)*arenaH*0.25),
+      vx:Math.cos(Math.random()*Math.PI*2)*(180+SPD*28),
+      vy:Math.sin(Math.random()*Math.PI*2)*(180+SPD*28),
+      r,
+      accel:1.0,
+      wepAngle:i===0?0:Math.PI,
+      wepSpeed:Math.PI*(0.55+BIQ*0.14),
+      wepDir:(i===0?1:-1),
+      bodyHitCooldown:0,
+      wepHitCooldown:0,
+      wepWepCooldown:0,
+      hitFlash:0,
+      dmgNumbers:[],
+      // Steroid gear tick
+      hasGiapGai:p.gears.some(g=>g.name==='Giáp gai'),
+      hasSteroid:p.gears.some(g=>g.name==='Steroid'),
+      hasHealFlask:p.gears.some(g=>g.name==='Healing Flasks'),healFlaskUsed:false,
+      hasBloody:p.skills.some(sk=>sk.name==='Bloody Strike'),
+      hasCritStrike:p.skills.some(sk=>sk.name==='Critical Strike'),critStacks:0,
+      hasEvasion:p.skills.some(sk=>sk.name==='Evasion'),evasionStacks:0,
+      hasFrostFinger:p.skills.some(sk=>sk.name==='Frost Fingers'),
+      spdDebuff:0,spdDebuffTimer:0,
+      hasMagmaStrike:p.skills.some(sk=>sk.name==='Magma Strike'),
+      magmaTimer:0,magmaZones:[],
+      hasIncineration:p.skills.some(sk=>sk.name==='Incineration'),incinerTimer:0,
+      hasEarth:p.skills.some(sk=>sk.name==='Earth-Quake'),earthTimer:0,
+      stunTimer:0,
+      hasBash:p.skills.some(sk=>sk.name==='Bash'),
+      // Spirit souls
+      isSpirit:p.race==='Spirit',soulStacks:0,lastHpThreshold:HP,
+      hasFrostArmor:p.skills.some(sk=>sk.name==='Frost Armor'),
+      deterTimer:0,hasDeter:p.gears.some(g=>g.name==='Determined Investor'),
+      healTimer:0,hasHealScroll:p.gears.some(g=>g.name==='Cuộn khăn giấy'),
+    };
+  });
+}
+
+function addLog(msg,cls='log-hit'){
+  const line=document.createElement('div');
+  line.className=cls;line.textContent=msg;
+  logEl.appendChild(line);
+  if(logEl.children.length>80) logEl.removeChild(logEl.firstChild);
+  logEl.scrollTop=logEl.scrollHeight;
+}
+
+function updateHUD(){
+  fighters.forEach((f,i)=>{
+    const pct=Math.max(0,f.curHp/f.maxHp*100);
+    document.getElementById('hpBar'+(i+1)).style.width=pct+'%';
+    document.getElementById('hpText'+(i+1)).textContent=
+      `HP: ${Math.max(0,Math.round(f.curHp))} / ${f.maxHp}`;
+  });
+}
+
+function dealDamage(attacker,defender,dmg,source=''){
+  const def=defender;
+  // Parry check (unarmed defender)
+  if(!def.armed&&def.parryRate>0&&Math.random()<def.parryRate){
+    addLog(`${def.name} PARRY đòn của ${attacker.name}!`,'log-parry');
+    attacker.accel=def.accel=1.0;
+    // Bash skill
+    if(def.hasBash){
+      attacker.stunTimer=3;
+      addLog(`${def.name} BASH! ${attacker.name} choáng 3s`,'log-event');
+    }
+    return;
+  }
+  // Evasion
+  if(def.hasEvasion&&Math.random()<def.evasionStacks*0.1){
+    addLog(`${def.name} né đòn! (Evasion)`,'log-parry');
+    return;
+  }
+  // Crit
+  let finalDmg=dmg;
+  if(attacker.hasCritStrike&&Math.random()<attacker.critStacks*0.2){
+    finalDmg=Math.round(dmg*1.5);
+    addLog(`💥 ${attacker.name} CRITICAL! ${finalDmg} sát thương`,'log-event');
+  } else {
+    addLog(`${attacker.name} → ${defender.name}: -${finalDmg} HP${source?` [${source}]`:''}`,'log-hit');
+  }
+  // Bloody Strike
+  if(attacker.hasBloody&&Math.random()<0.5){
+    attacker.curHp=Math.max(1,attacker.curHp-3);
+    finalDmg+=6;
+    addLog(`${attacker.name} Bloody Strike! -3 self, +6 dmg`,'log-event');
+  }
+  def.curHp-=finalDmg;
+  // Giap gai
+  if(def.hasGiapGai){
+    const reflect=Math.round(finalDmg*0.15);
+    attacker.curHp=Math.max(0,attacker.curHp-reflect);
+    addLog(`${def.name} Giáp gai phản ${reflect} sát thương`,'log-event');
+  }
+  // Frost Armor
+  if(def.hasFrostArmor){
+    def.curHp=Math.min(def.maxHp,def.curHp+2*10);
+    defender.opponent.spdDebuff=Math.max(0,defender.opponent?.spdDebuff||0-1);
+  }
+  // Frost Fingers
+  if(attacker.hasFrostFinger&&Math.random()<0.35){
+    def.spdDebuff=Math.max(0,def.spdDebuff-3);
+    def.spdDebuffTimer=10;
+    addLog(`❄ ${def.name} bị -3 SPD trong 10s`,'log-event');
+  }
+  // Spirit souls
+  if(def.isSpirit){
+    const threshold=Math.floor((def.maxHp-def.curHp)/10);
+    if(threshold>def.soulStacks){
+      def.soulStacks=threshold;
+      addLog(`${def.name} có ${def.soulStacks} Soul Stack`,'log-p2');
+      if(def.soulStacks>=6){def.BIQ=Math.max(1,def.BIQ+2);addLog(`Soul: BIQ+2`,'log-event');}
+      if(def.soulStacks>=13){def.ATK++;def.SPD++;def.BIQ++;def.IQ++;def.curHp=Math.min(def.maxHp,def.curHp+10);addLog(`Soul: +1 all stats`,'log-event');}
+    }
+  }
+  // EMP skill
+  for(const sk of defender.skills){
+    if(sk.name==='EMP'&&finalDmg>=5){
+      addLog(`⚡ EMP! ${attacker.name} không thể tấn công 2s`,'log-event');
+      attacker.stunTimer=Math.max(attacker.stunTimer,2);
+    }
+  }
+  // Heal Flask
+  if(!def.healFlaskUsed&&def.hasHealFlask&&def.curHp<def.maxHp*0.5){
+    const heal=Math.round(def.maxHp*0.15);
+    def.curHp=Math.min(def.maxHp,def.curHp+heal);
+    def.healFlaskUsed=true;
+    addLog(`🧪 ${def.name} dùng Healing Flask +${heal} HP`,'log-event');
+  }
+  def.hitFlash=0.25;
+  def.dmgNumbers.push({val:finalDmg,x:def.x+(Math.random()-.5)*30,y:def.y-def.r,life:1.2,vy:-40});
+  attacker.accel=def.accel=1.0;
+  // Sword scale: +1 atk per hit
+  if(attacker.weapon?.category==='Sword'){
+    attacker.ATK++;
+  }
+  // Firearm scale: +1 atk per hit
+  if(attacker.weapon?.category==='Firearm'){
+    attacker.ATK++;
+    addLog(`🔫 ${attacker.name} ATK+1 (Firearm)`,'log-event');
+  }
+  // Dagger: +1 BIQ per hit
+  if(attacker.weapon?.category==='Dagger'){
+    attacker.BIQ=Math.min(attacker.BIQ+1,20);
+  }
+  updateHUD();
+}
+
+function weaponHitbox(f,foe){
+  if(!f.armed) return false;
+  const WR=f.r*2.35;
+  const wx=f.x+Math.cos(f.wepAngle)*WR;
+  const wy=f.y+Math.sin(f.wepAngle)*WR;
+  const d=Math.hypot(wx-foe.x,wy-foe.y);
+  return d<foe.r+22;  // larger heavier weapon hitbox
+}
+
+// Weapon-to-weapon collision check
+function weaponVsWeapon(fA,fB){
+  if(!fA.armed||!fB.armed) return false;
+  const WR=fA.r*1.9;
+  const wax=fA.x+Math.cos(fA.wepAngle)*WR, way=fA.y+Math.sin(fA.wepAngle)*WR;
+  const WR2=fB.r*1.9;
+  const wbx=fB.x+Math.cos(fB.wepAngle)*WR2, wby=fB.y+Math.sin(fB.wepAngle)*WR2;
+  return Math.hypot(wax-wbx,way-wby)<22;
+}
+
+function drawArena(dt){
+  const W=arenaW,H=arenaH;
+  actx.clearRect(0,0,W,H);
+  // bg — void dark with subtle vignette
+  const bg=actx.createRadialGradient(W/2,H/2,0,W/2,H/2,W*.7);
+  bg.addColorStop(0,'#0d0916');bg.addColorStop(1,'#05030a');
+  actx.fillStyle=bg;actx.fillRect(0,0,W,H);
+  // rune grid
+  actx.strokeStyle='#3d2e5a18';actx.lineWidth=1;
+  for(let x=0;x<W;x+=40){actx.beginPath();actx.moveTo(x,0);actx.lineTo(x,H);actx.stroke();}
+  for(let y=0;y<H;y+=40){actx.beginPath();actx.moveTo(0,y);actx.lineTo(W,y);actx.stroke();}
+
+  fighters.forEach((f,fi)=>{
+    // magma zones
+    for(const mz of f.magmaZones){
+      actx.save();
+      actx.globalAlpha=mz.life/5*0.5;
+      actx.beginPath();actx.arc(mz.x,mz.y,f.r*2,0,Math.PI*2);
+      actx.fillStyle='#ff6b00';actx.fill();
+      actx.restore();
+    }
+
+    // hit flash
+    const foeColor=P_COLORS[fi];
+    if(f.hitFlash>0){
+      actx.save();actx.globalAlpha=f.hitFlash*0.6;
+      actx.beginPath();actx.arc(f.x,f.y,f.r+10,0,Math.PI*2);
+      actx.fillStyle='#fff';actx.fill();
+      actx.restore();
+      f.hitFlash=Math.max(0,f.hitFlash-dt);
+    }
+
+    // ball shadow
+    actx.save();
+    actx.shadowColor=foeColor+'66';actx.shadowBlur=20;
+    actx.beginPath();actx.arc(f.x,f.y,f.r,0,Math.PI*2);
+    const g=actx.createRadialGradient(f.x-f.r*.3,f.y-f.r*.3,f.r*.1,f.x,f.y,f.r);
+    g.addColorStop(0,P_COLORS_LIGHT[fi]);g.addColorStop(1,foeColor);
+    actx.fillStyle=g;actx.fill();
+    actx.strokeStyle='#fff3';actx.lineWidth=2;actx.stroke();
+    actx.restore();
+
+    // HP ring
+    const pct=Math.max(0,f.curHp/f.maxHp);
+    actx.save();
+    actx.beginPath();actx.arc(f.x,f.y,f.r+4,Math.PI*1.5,Math.PI*1.5+Math.PI*2*pct);
+    actx.strokeStyle=foeColor;actx.lineWidth=3;actx.lineCap='round';actx.stroke();
+    actx.restore();
+
+    // weapon orbiting - ornate styled
+    if(f.armed){
+      const WR=f.r*2.35;
+      const wx=f.x+Math.cos(f.wepAngle)*WR;
+      const wy=f.y+Math.sin(f.wepAngle)*WR;
+      const cat=(f.weapon?.category||'Sword').toLowerCase();
+      const c1=fi===0?'#e9c46a':'#a8dadc';
+      const c2=fi===0?'#c8860a':'#2a7d7a';
+      actx.save();
+      actx.translate(wx,wy);
+      actx.rotate(f.wepAngle+Math.PI/4);
+      actx.shadowColor=c1;actx.shadowBlur=14;
+
+      if(cat.includes('dagger')){
+        actx.scale(1.35,1.35);
+        // short wide dagger
+        actx.beginPath();actx.moveTo(0,-18);actx.lineTo(5,0);actx.lineTo(0,10);actx.lineTo(-5,0);actx.closePath();
+        const dg=actx.createLinearGradient(0,-18,0,10);
+        dg.addColorStop(0,'#ffffff');dg.addColorStop(.4,c1);dg.addColorStop(1,c2);
+        actx.fillStyle=dg;actx.fill();
+        actx.strokeStyle=c2;actx.lineWidth=1.5;actx.stroke();
+        // guard
+        actx.fillStyle=c2;actx.fillRect(-9,-1,18,4);
+        // pommel
+        actx.beginPath();actx.arc(0,13,5,0,Math.PI*2);actx.fillStyle=c1;actx.fill();
+      } else if(cat.includes('firearm')||cat.includes('bow')){
+        // ranged: glow circle + arrow
+        actx.beginPath();actx.arc(0,0,10,0,Math.PI*2);
+        actx.fillStyle=c1+'44';actx.fill();
+        actx.strokeStyle=c1;actx.lineWidth=2;actx.stroke();
+        actx.fillStyle=c1;
+        actx.beginPath();actx.moveTo(0,-20);actx.lineTo(4,0);actx.lineTo(0,-4);actx.lineTo(-4,0);actx.closePath();
+        actx.fill();
+      } else {
+        // sword/default: long blade with fuller
+        // blade
+        actx.beginPath();actx.moveTo(0,-28);actx.lineTo(5,2);actx.lineTo(0,8);actx.lineTo(-5,2);actx.closePath();
+        const sg=actx.createLinearGradient(-5,0,5,0);
+        sg.addColorStop(0,c2);sg.addColorStop(.45,'#ffffff');sg.addColorStop(.55,'#ffffff');sg.addColorStop(1,c2);
+        actx.fillStyle=sg;actx.fill();
+        actx.strokeStyle=c2+'aa';actx.lineWidth=1;actx.stroke();
+        // fuller (groove)
+        actx.strokeStyle='#ffffff55';actx.lineWidth=1;
+        actx.beginPath();actx.moveTo(0,-24);actx.lineTo(0,2);actx.stroke();
+        // crossguard
+        const gg=actx.createLinearGradient(-13,2,13,2);
+        gg.addColorStop(0,c2);gg.addColorStop(.5,c1);gg.addColorStop(1,c2);
+        actx.fillStyle=gg;actx.fillRect(-13,2,26,5);
+        actx.strokeStyle=c2;actx.lineWidth=1;actx.strokeRect(-13,2,26,5);
+        // grip
+        actx.fillStyle='#5c3d1e';actx.fillRect(-3,7,6,14);
+        // pommel
+        actx.beginPath();actx.arc(0,23,5,0,Math.PI*2);
+        actx.fillStyle=c1;actx.fill();
+        actx.strokeStyle=c2;actx.lineWidth=1.5;actx.stroke();
+      }
+      // glow trail
+      actx.restore();
+      actx.save();actx.globalAlpha=.25;
+      actx.beginPath();actx.arc(wx,wy,f.r*.45,0,Math.PI*2);
+      actx.fillStyle=c1;actx.fill();actx.restore();
+    } else {
+      // unarmed: spinning energy fist
+      const fx=f.x+Math.cos(f.wepAngle)*f.r*1.5;
+      const fy=f.y+Math.sin(f.wepAngle)*f.r*1.5;
+      actx.save();
+      actx.translate(fx,fy);
+      const fg=actx.createRadialGradient(0,0,0,0,0,11);
+      fg.addColorStop(0,'#ffffff');fg.addColorStop(.5,foeColor);fg.addColorStop(1,foeColor+'00');
+      actx.beginPath();actx.arc(0,0,11,0,Math.PI*2);
+      actx.fillStyle=fg;actx.fill();
+      // inner spark
+      actx.strokeStyle='#fff';actx.lineWidth=1.5;actx.globalAlpha=.7;
+      actx.beginPath();actx.moveTo(-5,-5);actx.lineTo(5,5);actx.moveTo(5,-5);actx.lineTo(-5,5);actx.stroke();
+      actx.restore();
+    }
+
+    // HP label
+    const hpPct=Math.max(0,f.curHp/f.maxHp);
+    actx.fillStyle=hpPct>.5?'#fff':hpPct>.25?'#ffd':`#f66`;
+    actx.font=`bold ${f.r*.5}px 'JetBrains Mono'`;
+    actx.textAlign='center';actx.textBaseline='middle';
+    actx.fillText(Math.max(0,Math.round(f.curHp)),f.x,f.y);
+    actx.textBaseline='alphabetic';
+
+    // stun indicator
+    if(f.stunTimer>0){
+      actx.font=`${f.r*.4}px sans-serif`;
+      actx.textAlign='center';actx.fillText('😵',f.x,f.y-f.r-8);
+    }
+
+    // dmg numbers
+    f.dmgNumbers=f.dmgNumbers.filter(n=>{
+      n.y+=n.vy*dt;n.life-=dt;
+      if(n.life<=0) return false;
+      actx.save();actx.globalAlpha=Math.min(1,n.life);
+      actx.fillStyle='#fff';actx.font=`bold 14px 'JetBrains Mono'`;
+      actx.textAlign='center';actx.fillText('-'+n.val,n.x,n.y);
+      actx.restore();
+      return true;
+    });
+  });
+}
+
+function arenaLoop(ts){
+  if(!fightRunning) return;
+  const dt=Math.min((ts-lastFrameTime)/1000,0.05);
+  lastFrameTime=ts;
+  arenaTime+=dt;
+
+  const [fA,fB]=fighters;
+  const foe=[fB,fA];
+
+  fighters.forEach((f,fi)=>{
+    const opponent=foe[fi];
+    if(f.curHp<=0) return;
+
+    // SPD debuff timer
+    if(f.spdDebuffTimer>0){f.spdDebuffTimer-=dt;if(f.spdDebuffTimer<=0)f.spdDebuff=0;}
+
+    // stun
+    if(f.stunTimer>0){f.stunTimer-=dt;return;}
+
+    // hit cooldown ticks
+    if(f.wepHitCooldown>0) f.wepHitCooldown-=dt;
+    if(f.bodyHitCooldown>0) f.bodyHitCooldown-=dt;
+    if(f.wepHitCooldown>0)  f.wepHitCooldown-=dt;
+    if(f.wepWepCooldown>0)  f.wepWepCooldown-=dt;
+
+    // ── Movement (px/s physics) ───────────────────────────────────
+    const dx=opponent.x-f.x, dy=opponent.y-f.y;
+    const dist=Math.hypot(dx,dy)||1;
+    const effSpd=Math.max(1,f.SPD+(f.spdDebuff||0));
+    const baseMaxSpd=100+effSpd*20;
+
+    // Accel builds when SPD advantage, resets on hit
+    const spdDiff=Math.max(0,f.SPD-opponent.SPD);
+    f.accel=Math.min(f.accel+spdDiff*0.08*dt+0.015*dt, 4.5);
+    const curMaxSpd=baseMaxSpd*f.accel;
+
+    // Soft pull toward opponent only at long range
+    const farThresh=arenaW*0.5;
+    if(dist>farThresh){
+      const pull=Math.min((dist-farThresh)/arenaW,0.5);
+      f.vx+=(dx/dist)*baseMaxSpd*pull*0.08*dt;
+      f.vy+=(dy/dist)*baseMaxSpd*pull*0.08*dt;
+    }
+    // Random drift — chaotic natural movement
+    const drift=baseMaxSpd*0.42;
+    f.vx+=(Math.random()-.5)*drift*dt;
+    f.vy+=(Math.random()-.5)*drift*dt;
+
+
+    // Anti-stuck safeguard
+    if(Math.hypot(f.vx,f.vy)<35){
+      const boostA=Math.random()*Math.PI*2;
+      f.vx+=Math.cos(boostA)*(80+f.SPD*10);
+      f.vy+=Math.sin(boostA)*(80+f.SPD*10);
+    }
+
+    // Clamp speed
+    const sv=Math.hypot(f.vx,f.vy);
+    if(sv>curMaxSpd){ f.vx=f.vx/sv*curMaxSpd; f.vy=f.vy/sv*curMaxSpd; }
+
+    // Integrate position (px/s × s = px)
+    f.x+=f.vx*dt;
+    f.y+=f.vy*dt;
+
+    // ── Wall elastic bounce ────────────────────────────────────────
+    const pad=f.r;
+    if(f.x<pad)        { f.x=pad;        f.vx= Math.abs(f.vx)*0.82; }
+    if(f.x>arenaW-pad) { f.x=arenaW-pad; f.vx=-Math.abs(f.vx)*0.82; }
+    if(f.y<pad)        { f.y=pad;        f.vy= Math.abs(f.vy)*0.82; }
+    if(f.y>arenaH-pad) { f.y=arenaH-pad; f.vy=-Math.abs(f.vy)*0.82; }
+
+    // ── Weapon spin ────────────────────────────────────────────────
+    f.wepSpeed=Math.PI*(0.55+f.BIQ*0.14);
+    if(f.weapon?.category==='Firearm'||f.weapon?.category?.toLowerCase().includes('bow')){
+      f.wepAngle=Math.atan2(opponent.y-f.y,opponent.x-f.x);
+    } else {
+      f.wepAngle+=f.wepSpeed*f.wepDir*dt;
+    }
+
+    // ── Body–body elastic collision ────────────────────────────────
+    if(dist<f.r+opponent.r){
+      const overlap=f.r+opponent.r-dist+0.5;
+      const nx=dx/dist, ny=dy/dist;
+      f.x-=nx*overlap*0.5; f.y-=ny*overlap*0.5;
+      opponent.x+=nx*overlap*0.5; opponent.y+=ny*overlap*0.5;
+      const relVx=f.vx-opponent.vx, relVy=f.vy-opponent.vy;
+      const dot=relVx*nx+relVy*ny;
+      if(dot>0){
+        const e=0.85; // restitution
+        f.vx      -=dot*nx*e; f.vy      -=dot*ny*e;
+        opponent.vx+=dot*nx*e; opponent.vy+=dot*ny*e;
+      }
+      f.accel=1.0; opponent.accel=1.0;
+      if(f.bodyHitCooldown<=0&&opponent.bodyHitCooldown<=0){
+        const spF=Math.hypot(f.vx,f.vy),spO=Math.hypot(opponent.vx,opponent.vy);
+        const [att,def]=spF>=spO?[f,opponent]:[opponent,f];
+        dealDamage(att,def,att.ATK,'body');
+        f.bodyHitCooldown=0.65; opponent.bodyHitCooldown=0.65;
+      }
+    }
+
+    // ── Weapon–body collision ──────────────────────────────────────
+    if(f.stunTimer<=0&&f.wepHitCooldown<=0&&weaponHitbox(f,opponent)){
+      dealDamage(f,opponent,f.ATK,'⚔');
+      f.wepHitCooldown=0.5;
+      f.wepDir*=-1;
+      f.accel=1.0; opponent.accel=1.0;
+      const kx=(opponent.x-f.x)/dist, ky=(opponent.y-f.y)/dist;
+      opponent.vx+=kx*180; opponent.vy+=ky*180;
+      f.vx-=kx*120; f.vy-=ky*120;
+
+      // recoil spin effect
+      f.wepDir*=-1;
+    }
+
+    // ── Weapon–weapon collision ────────────────────────────────────
+    if(f.wepWepCooldown<=0&&opponent.wepWepCooldown<=0&&weaponVsWeapon(f,opponent)){
+      f.wepDir*=-1; opponent.wepDir*=-1;
+      f.wepWepCooldown=0.25; opponent.wepWepCooldown=0.25;
+      const kx2=(f.x-opponent.x)/dist, ky2=(f.y-opponent.y)/dist;
+      f.vx+=kx2*110; f.vy+=ky2*110;
+      opponent.vx-=kx2*110; opponent.vy-=ky2*110;
+      addLog('⚔ Vũ khí va chạm!','log-parry');
+    }
+
+
+    // Skill ticks
+    for(const sk of f.skills){
+      sk.timer+=dt;
+      const cd=Math.max(0.5,sk.cd);
+      if(sk.timer>=cd){
+        sk.timer=0;
+        applySkillTick(f,opponent,sk);
+      }
+    }
+
+    // Magma zones
+    if(f.hasMagmaStrike){
+      f.magmaTimer+=dt;
+      if(f.magmaTimer>=5){
+        f.magmaTimer=0;
+        f.magmaZones.push({x:f.x,y:f.y,life:5});
+        addLog(`🌋 ${f.name} tạo vùng magma!`,'log-event');
+      }
+      f.magmaZones=f.magmaZones.filter(m=>{m.life-=dt;return m.life>0;});
+      for(const m of f.magmaZones){
+        if(Math.hypot(opponent.x-m.x,opponent.y-m.y)<f.r*2+opponent.r){
+          opponent.curHp=Math.max(0,opponent.curHp-5*dt);
+        }
+      }
+    }
+
+    // Incineration
+    if(f.hasIncineration){
+      f.incinerTimer+=dt;
+      if(f.incinerTimer>=10){
+        f.incinerTimer=0;
+        const d2=Math.hypot(opponent.x-f.x,opponent.y-f.y);
+        if(d2<f.r*3.6+opponent.r){
+          opponent.curHp=Math.max(0,opponent.curHp-5);
+          addLog(`🔥 ${f.name} Incineration! -5 HP`,'log-event');
+          opponent.hitFlash=0.2;
+        }
+      }
+    }
+
+    // Earthquake
+    if(f.hasEarth){
+      f.earthTimer+=dt;
+      if(f.earthTimer>=10){
+        f.earthTimer=0;
+        opponent.stunTimer=Math.max(opponent.stunTimer,1);
+        addLog(`🌍 ${f.name} Earth-Quake! stun 1s`,'log-event');
+      }
+    }
+
+    // Steroid drain
+    if(f.hasSteroid){
+      f.curHp=Math.max(1,f.curHp-f.maxHp*0.01*dt);
+    }
+
+    // Determined Investor
+    if(f.hasDeter){
+      const noHit=f.hitFlash<=0;
+      if(noHit) f.deterTimer+=dt; else f.deterTimer=0;
+      if(f.deterTimer>=10){f.deterTimer=0;f.ATK=Math.max(1,f.ATK+1);f.SPD=Math.max(1,f.SPD+1);addLog(`📈 ${f.name} +1 ATK +1 SPD`,'log-event');}
+    }
+
+    // Healing scroll
+    if(f.hasHealScroll){
+      const noHit=f.hitFlash<=0;
+      if(noHit) f.healTimer+=dt; else f.healTimer=0;
+      if(f.healTimer>=10){f.healTimer=0;f.curHp=Math.min(f.maxHp,f.curHp+10);addLog(`📜 ${f.name} hồi 1 HP`,'log-event');}
+    }
+
+    updateHUD();
+  });
+
+  drawArena(dt);
+
+  // Check end
+  if(fighters[0].curHp<=0||fighters[1].curHp<=0||arenaTime>=180){
+    endFight();
+    return;
+  }
+  arenaAnimId=requestAnimationFrame(arenaLoop);
+}
+
+function applySkillTick(f,opp,sk){
+  const n=sk.name.toLowerCase();
+  if(n.includes('u=ma2')){
+    if(f.SPD<opp.SPD){f.curHp=Math.min(f.maxHp,f.curHp+3);addLog(`💫 ${f.name} U=ma2 hồi 3 HP`,'log-event');}
+  }
+  if(n.includes('sand of time')){
+    f.skills.forEach(s=>s.cd=Math.max(.5,s.cd-1));
+    opp.skills.forEach(s=>s.cd+=1);
+    addLog(`⌛ ${f.name} Sand of Time`,'log-event');
+  }
+  if(n.includes('dominator')){
+    let bonus=0;
+    if(f.ATK>opp.ATK)bonus++;if(f.SPD>opp.SPD)bonus++;if(f.HP>opp.maxHp/10)bonus++;
+    if(f.BIQ>opp.BIQ)bonus++;if(f.IQ>opp.IQ)bonus++;
+    if(bonus>=3){f.ATK+=bonus;addLog(`👑 ${f.name} Dominator +${bonus} ATK`,'log-event');}
+  }
+  if(n.includes('tornado')){
+    const dx=f.x-opp.x,dy=f.y-opp.y,dist=Math.hypot(dx,dy);
+    if(dist>5){opp.vx+=(dx/dist)*200;opp.vy+=(dy/dist)*200;}
+    addLog(`🌪 ${f.name} Tornado! hút ${opp.name}`,'log-event');
+  }
+  if(n.includes('phasing')&&f.hitFlash>0){
+    f.hitFlash=0;
+    addLog(`👻 ${f.name} Phasing! tàng hình`,'log-event');
+  }
+}
+
+function endFight(){
+  fightRunning=false;
+  cancelAnimationFrame(arenaAnimId);
+  const [fA,fB]=fighters;
+  const overlay=document.getElementById('resultOverlay');
+  const title=document.getElementById('resultTitle');
+  const reason=document.getElementById('resultReason');
+  overlay.classList.add('show');
+  if(fA.curHp<=0&&fB.curHp<=0){
+    title.textContent='⚖ HÒA!';title.className='result-title draw';
+    reason.textContent='Cả hai cùng ngã xuống.';
+  } else if(fA.curHp<=0){
+    title.textContent=`🏆 ${fB.name} THẮNG!`;title.className='result-title p2';
+    reason.textContent=`${fA.name} hết máu.`;
+  } else if(fB.curHp<=0){
+    title.textContent=`🏆 ${fA.name} THẮNG!`;title.className='result-title p1';
+    reason.textContent=`${fB.name} hết máu.`;
+  } else {
+    const wa=fA.curHp>fB.curHp;
+    title.textContent=`🏆 ${wa?fA.name:fB.name} THẮNG!`;
+    title.className=wa?'result-title p1':'result-title p2';
+    reason.textContent=`Hết giờ 3 phút. ${fA.name}: ${Math.round(fA.curHp)} HP, ${fB.name}: ${Math.round(fB.curHp)} HP`;
+  }
+  addLog('═══════════ KẾT THÚC ═══════════','log-event');
+}
+
+function startArena(){
+  show('screen-arena');
+  logEl=document.getElementById('arenaLog');
+  logEl.innerHTML='';
+  document.getElementById('resultOverlay').classList.remove('show');
+
+  // Size arena
+  const frame=document.getElementById('arenaFrame');
+  arenaW=Math.min(600,window.innerWidth-32);
+  arenaH=arenaW;
+  arenaCanvas.width=arenaW;arenaCanvas.height=arenaH;
+  frame.style.width=arenaW+'px';frame.style.height=arenaH+'px';
+
+  // HUD
+  document.getElementById('hudP1Name').textContent=players[0].race;
+  document.getElementById('hudP2Name').textContent=players[1].race;
+
+  const setStatRow=(idx,p)=>{
+    const s=p.stats;
+    document.getElementById('statsRow'+(idx+1)).innerHTML=
+      ['ATK','SPD','IQ','BIQ','MA'].map(k=>`<div class="hud-stat">${k}<b>${s[k]}</b></div>`).join('');
+  };
+  setStatRow(0,players[0]);setStatRow(1,players[1]);
+
+  fighters=initFighters();
+  // link opponents
+  fighters[0].opponent=fighters[1];
+  fighters[1].opponent=fighters[0];
+
+  updateHUD();
+  drawArena(0);
+  arenaTime=0;
+  fightRunning=false;
+  document.getElementById('btnStart').disabled=false;
+}
+
+function beginFight(){
+  fightRunning=true;
+  lastFrameTime=performance.now();
+  document.getElementById('btnStart').disabled=true;
+  // Failsafe: ensure balls have velocity before start
+  fighters.forEach(f=>{
+    if(Math.hypot(f.vx,f.vy)<10){
+      const a=Math.random()*Math.PI*2;
+      f.vx=Math.cos(a)*(120+f.SPD*20);
+      f.vy=Math.sin(a)*(120+f.SPD*20);
+    }
+  });
+  addLog(`⚔ ${players[0].race} vs ${players[1].race} — BẮT ĐẦU!`,'log-event');
+  arenaAnimId=requestAnimationFrame(arenaLoop);
+}
+
+// ══════════════════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════════════════
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+let toastTimer;
+function showToast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+// ══════════════════════════════════════════════════════
+//  FILE UPLOAD
+// ══════════════════════════════════════════════════════
+document.getElementById('xlsxInput').addEventListener('change', async e=>{
+  const f=e.target.files[0];
+  if(!f){
+    document.getElementById('uploadStatus').textContent='❌ Không tìm thấy file';
+    return;
+  }
+
+  const ext=(f.name.split('.').pop()||'').toLowerCase();
+  if(!['xlsx','xls'].includes(ext)){
+    document.getElementById('uploadStatus').textContent='❌ File phải là .xlsx hoặc .xls';
+    return;
+  }
+
+  document.getElementById('uploadStatus').textContent='⏳ Đang đọc file Excel...';
+
+  try{
+    const buffer = await f.arrayBuffer();
+
+    if(typeof XLSX==='undefined'){
+      throw new Error('Thư viện XLSX chưa tải xong');
+    }
+
+    const wb=XLSX.read(buffer,{
+      type:'array',
+      cellDates:true,
+      cellText:false
+    });
+
+    GD=doParse(wb);
+
+    if(!GD || !GD.Races || GD.Races.length===0){
+      throw new Error('Không đọc được sheet Race');
+    }
+
+    document.getElementById('uploadStatus').textContent=
+      `✦ ${f.name} — ${GD.Races.length} races · ${GD.Skills.length} skills · ${GD.Weapons.length} weapons`;
+
+    document.getElementById('uploadZone').style.borderColor='#c9913a';
+
+    setTimeout(()=>{
+      show('screen-select');
+    },500);
+
+  }catch(err){
+    console.error(err);
+    document.getElementById('uploadStatus').textContent=
+      '❌ Lỗi đọc file: '+err.message;
+  }
+});
+
+// Drag & drop
+const zone=document.getElementById('uploadZone');
+zone.addEventListener('dragover',e=>{e.preventDefault();zone.style.borderColor='#c9913a';});
+zone.addEventListener('dragleave',()=>zone.style.borderColor='');
+zone.addEventListener('drop',e=>{
+  e.preventDefault();zone.style.borderColor='';
+  const f=e.dataTransfer.files[0]; if(!f) return;
+  const dt=new DataTransfer();dt.items.add(f);
+  document.getElementById('xlsxInput').files=dt.files;
+  document.getElementById('xlsxInput').dispatchEvent(new Event('change'));
+});
+
+window.addEventListener('resize',()=>{
+  if(document.getElementById('screen-arena').classList.contains('active')&&!fightRunning){
+    startArena();
+  }
+});
+
+// ── Font warm-up: force browser to load Cinzel before first canvas draw ──
+// Canvas ignores web fonts until they're actually rendered in DOM first.
+// This hidden element triggers font load; then we redraw wheel once ready.
+(function warmupFont(){
+  const probe=document.createElement('span');
+  probe.style.cssText='position:absolute;visibility:hidden;font-family:Cinzel,serif;font-size:12px;';
+  probe.textContent='ABCabc';
+  document.body.appendChild(probe);
+
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(()=>{
+      document.body.removeChild(probe);
+      // Redraw wheel if spin screen is active
+      if(wheelSlices.length) drawWheel(wheelSlices,wheelAngle);
+    });
+  } else {
+    setTimeout(()=>{
+      try{document.body.removeChild(probe);}catch(e){}
+      if(wheelSlices.length) drawWheel(wheelSlices,wheelAngle);
+    },800);
+  }
+})();
+
+</script>
+</body>
+</html>
