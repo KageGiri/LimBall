@@ -1915,7 +1915,7 @@ function spawnVisualProjectile(attacker, target, cat, dmg) {
   const dx = target.x - attacker.x;
   const dy = target.y - attacker.y;
   const angle = Math.atan2(dy, dx);
-  const travelTime = WEAPON_SCALE[cat]?.travelTime || 0.5;
+  const travelTime = (WEAPON_SCALE[cat]?.travelTime || 0.5) / attacker.projectileSpeedMultiplier;
   
   const p = {
     x: attacker.x,
@@ -1931,7 +1931,10 @@ function spawnVisualProjectile(attacker, target, cat, dmg) {
     dmg: dmg,
     life: 1.0, // Progress 0 to 1
     speed: 1.0 / (travelTime * 60), // approximate speed per frame at 60fps
-    progress: 0
+    progress: 0,
+    sizeMultiplier: attacker.projectileSizeMultiplier,
+    bounces: 0,
+    maxBounces: (cat === CAT.SPECIAL || attacker.weapon?.name?.toLowerCase().includes('shuriken')) ? 1 : 0,
   };
   simProjectiles.push(p);
 }
@@ -1992,7 +1995,26 @@ function initFighters(){
       trail: [], // For afterimage effect
       dashTimer: 0, // Current dash progress (0 to 1)
       isDashing: false,
+      // Weapon scaling state
+      extraProjectiles: 0,
+      projectileSizeMultiplier: 1.0,
+      projectileSpeedMultiplier: 1.0,
+      fireRateMultiplier: 1.0,
+      autoFireTimer: 0,
+      autoFireInterval: 2.5, // Default for magic, will be overwritten
+      lastHitTime: 0,
+      swordATK: 0,
+      daggerBIQ: 0,
+      polearmATK: 0,
+      isDualWielder: p.skills.some(sk => sk.name === 'Dual Wielder'),
     };
+
+    // Set initial auto-fire interval based on weapon
+    if(fighter.weapon) {
+      const cat = resolveCategory(fighter.weapon);
+      if (cat === CAT.FIREARM) fighter.autoFireInterval = 1.0;
+      if (cat === CAT.MAGIC) fighter.autoFireInterval = 2.5;
+    }
 
     buildHooks(fighter);
     return fighter;
@@ -2039,15 +2061,45 @@ function dealDamage(attacker,defender,dmg,source=''){
   
   def.curHp -= finalDmg;
 
-  // Weapon category scaling
-  const cat = resolveCategory(attacker.weapon);
-  if (WEAPON_SCALE[cat]) {
-    WEAPON_SCALE[cat].onHit(attacker, defender);
+  // Weapon scaling on hit
+  const cat = attacker.weapon ? resolveCategory(attacker.weapon) : CAT.UNARMED;
+  
+  if(cat === CAT.SWORD){
+    attacker.swordATK += 1;
+    attacker.ATK = Math.max(1, attacker.ATK + 1);
+  }
+  if(cat === CAT.DAGGER){
+    attacker.daggerBIQ += 1;
+    attacker.BIQ = Math.max(1, attacker.BIQ + 1);
+  }
+  if(cat === CAT.POLEARM){
+    attacker.polearmATK += 0.5;
+    attacker.ATK = Math.max(1, attacker.ATK + 0.5);
+  }
+  if(cat === CAT.BOW || cat === CAT.FIREARM || (attacker.weapon && attacker.weapon.name.toLowerCase().includes('shuriken'))){
+    attacker.extraProjectiles += 1;
+    if(cat === CAT.FIREARM){
+      attacker.ATK = Math.max(1, attacker.ATK + 1);
+      attacker.fireRateMultiplier = Math.max(0.1, attacker.fireRateMultiplier * 0.92);
+      attacker.projectileSpeedMultiplier = attacker.projectileSpeedMultiplier * 1.05;
+    }
+  }
+  if(cat === CAT.MAGIC){
+    attacker.projectileSizeMultiplier *= 1.08;
+    attacker.BIQ = Math.max(1, attacker.BIQ + 1);
+  }
+
+  // Reset accel on hit (except for unarmed)
+  if(cat !== CAT.UNARMED){
+    attacker.accel = 1.0;
+    def.accel = 1.0;
+  } else {
+    // Unarmed: lose speed on hit
+    attacker.SPD = Math.max(1, attacker.SPD - 1);
   }
 
   def.hitFlash=0.25;
   def.dmgNumbers.push({val:Math.round(finalDmg),x:def.x+(Math.random()-.5)*30,y:def.y-def.r,life:1.2,vy:-40});
-  attacker.accel=def.accel=1.0;
   
   // Trigger Visual Dash Effect
   attacker.isDashing = true;
@@ -2253,6 +2305,9 @@ function drawArena(dt){
     actx.save();
     actx.translate(p.x, p.y);
     actx.rotate(p.angle + p.rotation);
+    
+    const scale = p.sizeMultiplier || 1;
+    actx.scale(scale, scale);
 
     const color = P_COLORS[p.attacker.idx];
     const lightColor = P_COLORS_LIGHT[p.attacker.idx];
@@ -2364,9 +2419,18 @@ function arenaLoop(ts){
       if (f.dashTimer < 0) { f.dashTimer = 0; f.isDashing = false; }
     }
 
-    // Accel builds when SPD advantage, resets on hit
+    // Constant speed increase (3.6%/s) except for unarmed
+    const cat = f.weapon ? resolveCategory(f.weapon) : CAT.UNARMED;
+    if (cat !== CAT.UNARMED) {
+      f.accel = Math.min(f.accel + f.accel * 0.036 * dt, 10);
+    }
+
+    // Accel also builds when SPD advantage, extra for unarmed
     const spdDiff=Math.max(0,f.SPD-opponent.SPD);
-    f.accel=Math.min(f.accel+spdDiff*0.08*dt+0.015*dt, 4.5);
+    if (cat === CAT.UNARMED) {
+      f.accel=Math.min(f.accel+spdDiff*0.08*dt+0.015*dt, 4.5);
+    }
+
     const curMaxSpd=baseMaxSpd*f.accel;
 
     // Apply Dash Boost to velocity if dashing
@@ -2419,10 +2483,33 @@ function arenaLoop(ts){
 
     // ── Weapon spin ────────────────────────────────────────────────
     f.wepSpeed=Math.PI*(0.55+f.BIQ*0.14);
-    if(f.weapon?.category==='Firearm'||f.weapon?.category?.toLowerCase().includes('bow')){
+    if( (f.weapon?.category?.toLowerCase().includes('firearm') || f.weapon?.category?.toLowerCase().includes('bow') || f.weapon?.category?.toLowerCase().includes('polearm'))){
       f.wepAngle=Math.atan2(opponent.y-f.y,opponent.x-f.x);
     } else {
       f.wepAngle+=f.wepSpeed*f.wepDir*dt;
+    }
+
+    // ── Auto-fire for ranged weapons ────────────────────────────────────────
+    if(f.weapon){
+      const wcat = resolveCategory(f.weapon);
+      // Apply BIQ scaling to fire rate: +10% per BIQ
+      const adjustedFireInterval = f.autoFireInterval * (1 / (1 + f.BIQ * 0.1)) * f.fireRateMultiplier;
+      if ((wcat === CAT.FIREARM || wcat === CAT.MAGIC) && f.stunTimer <= 0) {
+        f.autoFireTimer += dt;
+        if (f.autoFireTimer >= adjustedFireInterval) {
+          f.autoFireTimer = 0;
+          // Spawn projectile
+          spawnVisualProjectile(f, opponent, wcat, f.ATK);
+          // Also spawn extra projectiles
+          for (let i = 0; i < f.extraProjectiles; i++) {
+            // Add a little random offset for extra projectiles
+            const offsetX = (Math.random() - 0.5) * 20;
+            const offsetY = (Math.random() - 0.5) * 20;
+            const tempTarget = { x: opponent.x + offsetX, y: opponent.y + offsetY };
+            spawnVisualProjectile(f, tempTarget, wcat, f.ATK * 0.7);
+          }
+        }
+      }
     }
 
     // ── Body–body elastic collision ────────────────────────────────
@@ -2554,19 +2641,67 @@ function arenaLoop(ts){
 
   // ── Update Projectiles ──
   simProjectiles = simProjectiles.filter(p => {
-    p.progress += p.speed * (dt * 60); 
-    if (p.progress >= 1.0) {
-      dealDamage(p.attacker, p.target, p.dmg, '🎯');
-      return false;
+    // Initialize velocity if not present
+    if (!p.vx || !p.vy) {
+      const totalDist = Math.hypot(p.target.x - p.x, p.target.y - p.y);
+      const speed = totalDist / (0.5 / p.speed); // Approximate speed
+      p.vx = (p.target.x - p.x) / totalDist * speed;
+      p.vy = (p.target.y - p.y) / totalDist * speed;
     }
-    // Simple linear interpolation
-    p.x = p.attacker.x + (p.target.x - p.attacker.x) * p.progress;
-    p.y = p.attacker.y + (p.target.y - p.attacker.y) * p.progress;
-    
+
+    // Move projectile
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+
     // Rotate Shuriken or Magic
     if (p.weaponName.toLowerCase().includes('shuriken') || p.wCategory === CAT.MAGIC) {
       p.rotation += 15 * dt; 
     }
+
+    // Check if projectile hit target
+    const hitDist = Math.hypot(p.target.x - p.x, p.target.y - p.y);
+    const hitRadius = 30; // Adjust hit radius
+    if (hitDist < hitRadius) {
+      dealDamage(p.attacker, p.target, p.dmg, '🎯');
+      // Bounce if shuriken
+      if (p.maxBounces > p.bounces && (p.weaponName.toLowerCase().includes('shuriken'))) {
+        p.bounces++;
+        // Reflect off the target (bounce in opposite direction)
+        p.vx *= -0.8;
+        p.vy *= -0.8;
+        // Set new target to be opposite direction
+        p.target = {
+          x: p.x + (p.x - p.target.x),
+          y: p.y + (p.y - p.target.y)
+        };
+        return true;
+      }
+      return false;
+    }
+
+    // Also check wall collisions for bouncing
+    const pad = 10;
+    let bounced = false;
+    if (p.x < pad || p.x > arenaW - pad) {
+      p.vx *= -0.8;
+      p.x = Math.max(pad, Math.min(arenaW - pad, p.x));
+      bounced = true;
+    }
+    if (p.y < pad || p.y > arenaH - pad) {
+      p.vy *= -0.8;
+      p.y = Math.max(pad, Math.min(arenaH - pad, p.y));
+      bounced = true;
+    }
+
+    if (bounced && p.bounces < p.maxBounces) {
+      p.bounces++;
+      return true;
+    }
+
+    // Remove projectile if it's been too long (1.5 seconds)
+    if (!p.spawnTime) p.spawnTime = arenaTime;
+    if (arenaTime - p.spawnTime > 1.5) return false;
+
     return true;
   });
 
