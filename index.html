@@ -870,6 +870,13 @@ body::before{
   <div class="btn-row" style="margin-top:16px;">
     <button class="btn" onclick="startSpin(0)">⚗ Triệu Hồi P1</button>
     <button class="btn" onclick="startSpin(1)">⚗ Triệu Hồi P2</button>
+  </div>
+  <div class="btn-row" style="margin-top:8px;">
+    <button class="btn" onclick="autoGenCharacter(0)">✦ Tự Tạo P1</button>
+    <button class="btn" onclick="autoGenCharacter(1)">✦ Tự Tạo P2</button>
+    <button class="btn" onclick="autoGenBoth()">✦ Tự Tạo Cả Hai</button>
+  </div>
+  <div class="btn-row" style="margin-top:12px;">
     <button class="btn btn-primary" id="btnFight" disabled onclick="startArena()">⚔ Khai Chiến!</button>
   </div>
 </div>
@@ -1429,7 +1436,9 @@ function triggerWheelSpin(slices,cb,stepKey){
 // ─── Step helpers ───────────────────────────────────
 function makeStatSlices(tblKey,race){
   const tbl=GD.Stats[tblKey];
-  const k=Object.keys(tbl).find(x=>x.toLowerCase()===race.toLowerCase());
+  // Try exact match, then substring match (for "Alien" vs "Alien (Cybernetic)" etc.)
+  let k=Object.keys(tbl).find(x=>x.toLowerCase()===race.toLowerCase());
+  if(!k) k=Object.keys(tbl).find(x=>x.toLowerCase().includes(race.toLowerCase()));
   if(!k) return [{item:1,weight:100,label:'1'}];
   return tbl[k].filter(s=>s.weight!==null&&s.weight>0)
     .map(s=>({item:s.level,weight:s.weight,label:String(s.level)}));
@@ -1470,8 +1479,9 @@ function advanceSpin(winner){
     document.getElementById('spinRaceDisplay').textContent=char.race;
     // Special: Skeleton IQ fixed 1
     char._skeletonIQ=char.race.toLowerCase()==='skeleton';
-    // Special: Alien can't have weapon
+    // Special: Alien or Undead Dragon can't have weapon
     char._alienNoWeapon=char.race.toLowerCase()==='alien';
+    char._undeadNoWeapon=char.race.toLowerCase().includes('undead') && char.race.toLowerCase().includes('dragon');
     // Check subrace per race using alias map
     const raceInfo=GD.Races.find(r=>r.race===char.race);
     const subWheelName=(raceInfo?.subWheel||'').trim();
@@ -1551,7 +1561,7 @@ function advanceSpin(winner){
   else if(st.stepKey==='weapon'){
     st.pendingWeapon=(winner.item==='Có');
     setResult(st.pendingWeapon?'CÓ VŨ KHÍ':'KHÔNG VŨ KHÍ',st.pendingWeapon?'✓':'✗','');
-    nextKey=st.pendingWeapon&&!char._alienNoWeapon?'weapon_pick':'done';
+    nextKey=st.pendingWeapon&&!char._alienNoWeapon&&!char._undeadNoWeapon?'weapon_pick':'done';
   }
   else if(st.stepKey==='weapon_pick'){
     char.weapon={name:winner.item||winner.name,category:winner.category||'',milestones:winner.milestones||{},scale:winner.scale||''};
@@ -1646,6 +1656,114 @@ function setResult(label,val,sub){
   document.getElementById('resultSub').textContent=sub;
 }
 
+function pickWeighted(slices){
+  if(!slices.length) return null;
+  const total = slices.reduce((sum, x) => sum + Math.max(0.01, parseFloat(x.weight)), 0);
+  let r = Math.random() * total;
+  for(const s of slices){
+    r -= Math.max(0.01, parseFloat(s.weight));
+    if(r <= 0) return s;
+  }
+  return slices[slices.length-1];
+}
+
+function autoGenCharacter(playerIdx){
+  if (!GD) {
+    showToast('❌ Dữ liệu chưa nạp xong. Vui lòng chờ...');
+    return;
+  }
+  const char={
+    race:'',
+    subrace:null,
+    stats:{ATK:1,HP:1,SPD:1,IQ:1,BIQ:1,MA:1},
+    skills:[],
+    gears:[],
+    weapon:null,
+    _gearPool:[...GD.Gear],
+    _skillPool:[...GD.Skills],
+    _skeletonIQ:false,
+    _alienNoWeapon:false,
+    _undeadNoWeapon:false,
+  };
+  
+  // 1. Race
+  const raceSlice = pickWeighted(GD.Races.map(r => ({...r, weight: r.weight || 10, item: r.race, label: r.race})));
+  char.race = raceSlice.race || raceSlice.item;
+  
+  // 2. Check special flags
+  char._skeletonIQ = char.race.toLowerCase() === 'skeleton';
+  char._alienNoWeapon = char.race.toLowerCase() === 'alien';
+  char._undeadNoWeapon = char.race.toLowerCase().includes('undead') && char.race.toLowerCase().includes('dragon');
+  
+  // 3. Subrace
+  const raceInfo = GD.Races.find(r => r.race === char.race);
+  const subWheelName = (raceInfo?.subWheel || '').trim();
+  if(subWheelName){
+    const resolvedKey = resolveSubraceKey(subWheelName, GD.Subraces);
+    if(resolvedKey && GD.Subraces[resolvedKey] && GD.Subraces[resolvedKey].length > 0){
+      const subSlice = pickWeighted(GD.Subraces[resolvedKey]);
+      char.subrace = {name: subSlice.item, effect: subSlice.effect || ''};
+    }
+  }
+  
+  // 4. Stats
+  const statKeys = ['ATK','HP','SPD','IQ','BIQ','MA'];
+  for(const key of statKeys){
+    const statSlices = makeStatSlices(key, char.race);
+    const statWinner = pickWeighted(statSlices);
+    char.stats[key] = parseInt(statWinner.item || statWinner.level) || 1;
+  }
+  if(char._skeletonIQ) char.stats.IQ = 1; // Fix IQ for skeleton
+  
+  // 5. Gear count + gears
+  const gearCountSlice = pickWeighted(GD.GearWheel);
+  const gearCount = parseInt(gearCountSlice.gearCount || 0);
+  for(let i = 0; i < gearCount && char._gearPool.length > 0; i++){
+    const gIdx = Math.floor(Math.random() * char._gearPool.length);
+    char.gears.push(char._gearPool.splice(gIdx, 1)[0]);
+  }
+  
+  // 6. Skill count + skills
+  const skillWheelKey = Object.keys(GD.SkillWheel).find(x => x.toLowerCase() === char.race.toLowerCase());
+  let skillSlices = skillWheelKey ? GD.SkillWheel[skillWheelKey] : [{skillCount:0,weight:100}];
+  const skillCountSlice = pickWeighted(skillSlices);
+  const skillCount = parseInt(skillCountSlice.skillCount || 0);
+  for(let i = 0; i < skillCount && char._skillPool.length > 0; i++){
+    const sIdx = Math.floor(Math.random() * char._skillPool.length);
+    char.skills.push(char._skillPool.splice(sIdx, 1)[0]);
+  }
+  
+  // 7. Weapon
+  if(!char._alienNoWeapon && !char._undeadNoWeapon){
+    const weaponWheelSlice = pickWeighted(GD.WeaponWheel);
+    const wantsWeapon = (weaponWheelSlice.item || weaponWheelSlice.weapon || '').toLowerCase() === 'có';
+    if(wantsWeapon && GD.Weapons.length > 0){
+      const weaponPick = pickWeighted(GD.Weapons.map(w => ({...w, weight: w.weight || 1, item: w.name, label: w.name})));
+      char.weapon = {
+        name: weaponPick.name,
+        category: weaponPick.category || '',
+        milestones: weaponPick.milestones || {},
+        scale: weaponPick.scale || ''
+      };
+    }
+  }
+  
+  // Apply modifiers
+  applyStatModifiers(char);
+  
+  // Save to players
+  players[playerIdx] = char;
+  updateSlot(playerIdx, char);
+  checkFightReady();
+  
+  showToast(`✅ Đã tạo ${char.race} cho Player ${playerIdx+1} tự động!`);
+}
+
+function autoGenBoth(){
+  autoGenCharacter(0);
+  autoGenCharacter(1);
+}
+
 function startSpin(playerIdx){
   if (!GD) {
     showToast('❌ Dữ liệu chưa nạp xong. Vui lòng chờ...');
@@ -1721,18 +1839,18 @@ const WEAPON_SCALE = {
     }
   },
   [CAT.BOW]: {
-    label: '🏹 Bow', projectile: true, travelTime: 0.6,
+    label: '🏹 Bow', projectile: true, travelTime: 0.1, // Way faster!
     onHit(a, _d, log) { a._bowExtraShots = (a._bowExtraShots || 0) + 1; addLog(`  ↑ Bow: extra shots→${a._bowExtraShots}`, 'log-event'); }
   },
   [CAT.FIREARM]: {
-    label: '🔫 Firearm', projectile: true, travelTime: 0.25,
+    label: '🔫 Firearm', projectile: true, travelTime: 0.05, // Super fast!
     onHit(a, _d, log) {
       a.ATK++; a._firearmSpeedMult = Math.max(0.4, (a._firearmSpeedMult || 1) * 0.92);
       addLog(`  ↑ Firearm: ${a.name} ATK→${a.ATK}`, 'log-event');
     }
   },
   [CAT.MAGIC]: {
-    label: '🔮 Magic', projectile: true, travelTime: 0.5,
+    label: '🔮 Magic', projectile: true, travelTime: 0.15, // Faster!
     onHit(a, _d, log) { a.BIQ = Math.min(a.BIQ + 1, 20); addLog(`  ↑ Magic: ${a.name} BIQ→${a.BIQ}`, 'log-event'); }
   },
   [CAT.UNARMED]: { label: '✊ Unarmed', projectile: false, onHit() { } },
@@ -1915,22 +2033,31 @@ function spawnVisualProjectile(attacker, target, cat, dmg) {
   const dx = target.x - attacker.x;
   const dy = target.y - attacker.y;
   const angle = Math.atan2(dy, dx);
-  const travelTime = (WEAPON_SCALE[cat]?.travelTime || 0.5) / attacker.projectileSpeedMultiplier;
+  const travelTime = (WEAPON_SCALE[cat]?.travelTime || 0.15) / attacker.projectileSpeedMultiplier;
+  const distance = Math.min(Math.hypot(dx, dy), arenaW * 0.8); // Tăng khoảng cách bay
+  const speed = (distance / travelTime) * 1.5; // Tăng tốc độ bay
+  
+  // Vị trí bắt đầu từ vũ khí
+  const wepDist = attacker.r * 2.35;
+  const startX = attacker.x + Math.cos(angle) * wepDist;
+  const startY = attacker.y + Math.sin(angle) * wepDist;
   
   const p = {
-    x: attacker.x,
-    y: attacker.y,
+    x: startX,
+    y: startY,
+    vx: (dx / Math.hypot(dx, dy)) * speed,
+    vy: (dy / Math.hypot(dy, dx)) * speed,
     tx: target.x,
     ty: target.y,
     attacker: attacker,
     target: target,
+    attackerIdx: attacker.idx, // Lưu idx để không tự gây sát thương cho mình
     wCategory: cat,
     weaponName: attacker.weapon?.name || '',
     angle: angle,
     rotation: 0,
     dmg: dmg,
-    life: 1.0, // Progress 0 to 1
-    speed: 1.0 / (travelTime * 60), // approximate speed per frame at 60fps
+    life: 2.0, // Thời gian sống của đạn (giây)
     progress: 0,
     sizeMultiplier: attacker.projectileSizeMultiplier,
     bounces: 0,
@@ -2012,8 +2139,9 @@ function initFighters(){
     // Set initial auto-fire interval based on weapon
     if(fighter.weapon) {
       const cat = resolveCategory(fighter.weapon);
-      if (cat === CAT.FIREARM) fighter.autoFireInterval = 1.0;
-      if (cat === CAT.MAGIC) fighter.autoFireInterval = 2.5;
+      if (cat === CAT.BOW) fighter.autoFireInterval = 0.5;
+      if (cat === CAT.FIREARM) fighter.autoFireInterval = 0.2;
+      if (cat === CAT.MAGIC) fighter.autoFireInterval = 1.0;
     }
 
     buildHooks(fighter);
@@ -2419,10 +2547,10 @@ function arenaLoop(ts){
       if (f.dashTimer < 0) { f.dashTimer = 0; f.isDashing = false; }
     }
 
-    // Constant speed increase (3.6%/s) except for unarmed
+    // Constant speed increase (100%/s) except for unarmed
     const cat = f.weapon ? resolveCategory(f.weapon) : CAT.UNARMED;
     if (cat !== CAT.UNARMED) {
-      f.accel = Math.min(f.accel + f.accel * 0.036 * dt, 10);
+      f.accel = Math.min(f.accel + f.accel * 1.0 * dt, 15);
     }
 
     // Accel also builds when SPD advantage, extra for unarmed
@@ -2494,7 +2622,7 @@ function arenaLoop(ts){
       const wcat = resolveCategory(f.weapon);
       // Apply BIQ scaling to fire rate: +10% per BIQ
       const adjustedFireInterval = f.autoFireInterval * (1 / (1 + f.BIQ * 0.1)) * f.fireRateMultiplier;
-      if ((wcat === CAT.FIREARM || wcat === CAT.MAGIC) && f.stunTimer <= 0) {
+      if ((wcat === CAT.BOW || wcat === CAT.FIREARM || wcat === CAT.MAGIC) && f.stunTimer <= 0) {
         f.autoFireTimer += dt;
         if (f.autoFireTimer >= adjustedFireInterval) {
           f.autoFireTimer = 0;
@@ -2641,14 +2769,6 @@ function arenaLoop(ts){
 
   // ── Update Projectiles ──
   simProjectiles = simProjectiles.filter(p => {
-    // Initialize velocity if not present
-    if (!p.vx || !p.vy) {
-      const totalDist = Math.hypot(p.target.x - p.x, p.target.y - p.y);
-      const speed = totalDist / (0.5 / p.speed); // Approximate speed
-      p.vx = (p.target.x - p.x) / totalDist * speed;
-      p.vy = (p.target.y - p.y) / totalDist * speed;
-    }
-
     // Move projectile
     p.x += p.vx * dt;
     p.y += p.vy * dt;
@@ -2658,51 +2778,54 @@ function arenaLoop(ts){
       p.rotation += 15 * dt; 
     }
 
-    // Check if projectile hit target
-    const hitDist = Math.hypot(p.target.x - p.x, p.target.y - p.y);
-    const hitRadius = 30; // Adjust hit radius
-    if (hitDist < hitRadius) {
-      dealDamage(p.attacker, p.target, p.dmg, '🎯');
-      // Bounce if shuriken
-      if (p.maxBounces > p.bounces && (p.weaponName.toLowerCase().includes('shuriken'))) {
-        p.bounces++;
-        // Reflect off the target (bounce in opposite direction)
-        p.vx *= -0.8;
-        p.vy *= -0.8;
-        // Set new target to be opposite direction
-        p.target = {
-          x: p.x + (p.x - p.target.x),
-          y: p.y + (p.y - p.target.y)
-        };
-        return true;
+    // Check if projectile hit ANY fighter, skip attacker
+    let hitSomeone = false;
+    for (const defender of fighters) {
+      if (defender.idx === p.attackerIdx) continue; // Skip hitting self!
+      const hitDist = Math.hypot(defender.x - p.x, defender.y - p.y);
+      const hitRadius = defender.r + 15;
+      if (hitDist < hitRadius) {
+        dealDamage(p.attacker, defender, p.dmg, '🎯');
+        hitSomeone = true;
+        // Bounce if shuriken
+        if (p.maxBounces > p.bounces && (p.weaponName.toLowerCase().includes('shuriken'))) {
+          p.bounces++;
+          // Reflect off defender
+          const nx = (p.x - defender.x) / hitDist;
+          const ny = (p.y - defender.y) / hitDist;
+          const dot = p.vx * nx + p.vy * ny;
+          p.vx = (p.vx - 2 * dot * nx) * 0.85;
+          p.vy = (p.vy - 2 * dot * ny) * 0.85;
+          hitSomeone = false; // Don't delete, let it bounce
+        }
+        break;
       }
-      return false;
     }
+    if (hitSomeone) return false;
 
-    // Also check wall collisions for bouncing
+    // Check wall collisions for bouncing
     const pad = 10;
     let bounced = false;
     if (p.x < pad || p.x > arenaW - pad) {
-      p.vx *= -0.8;
+      p.vx *= -0.85;
       p.x = Math.max(pad, Math.min(arenaW - pad, p.x));
       bounced = true;
     }
     if (p.y < pad || p.y > arenaH - pad) {
-      p.vy *= -0.8;
+      p.vy *= -0.85;
       p.y = Math.max(pad, Math.min(arenaH - pad, p.y));
       bounced = true;
     }
 
     if (bounced && p.bounces < p.maxBounces) {
       p.bounces++;
-      return true;
+    } else if (bounced) {
+      return false;
     }
 
-    // Remove projectile if it's been too long (1.5 seconds)
-    if (!p.spawnTime) p.spawnTime = arenaTime;
-    if (arenaTime - p.spawnTime > 1.5) return false;
-
-    return true;
+    // Remove projectile based on life
+    p.life -= dt;
+    return p.life > 0;
   });
 
   drawArena(dt);
