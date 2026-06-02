@@ -2540,16 +2540,16 @@ function arenaLoop(ts){
     
     // Firing state only for bow
     const currentWepCat = f.weapon ? resolveCategory(f.weapon) : CAT.UNARMED;
+    let isFiringAndBow = false;
     if (f.isFiring && currentWepCat === CAT.BOW) {
       f.firingTimer -= dt;
       if (f.firingTimer <= 0) {
         f.isFiring = false;
       } else {
+        isFiringAndBow = true;
         // Đứng im: không cập nhật vị trí, chỉ cập nhật vũ khí về hướng địch
         // Đặt góc vũ khí về địch
         f.wepAngle = Math.atan2(opponent.y - f.y, opponent.x - f.x);
-        // Bỏ qua các phần movement, drift, v.v.
-        // Jump to weapon auto-fire and collision
       }
     } else if (f.isFiring) {
       // Reset isFiring for non-bow weapons
@@ -2561,43 +2561,42 @@ function arenaLoop(ts){
     if(f.bodyHitCooldown>0) f.bodyHitCooldown-=dt;
     if(f.wepWepCooldown>0)  f.wepWepCooldown-=dt;
 
-    // Only skip movement if we're firing AND it's a bow
-    if (!(f.isFiring && currentWepCat === CAT.BOW)) {
-      // ── Movement (px/s physics) ───────────────────────────────────
-      const dx=opponent.x-f.x, dy=opponent.y-f.y;
-      const dist=Math.hypot(dx,dy)||1;
-      const effSpd=Math.max(1,f.SPD+(f.spdDebuff||0));
-      const baseMaxSpd=100+effSpd*20;
+    // ── Movement (px/s physics) ───────────────────────────────────
+    const dx=opponent.x-f.x, dy=opponent.y-f.y;
+    const dist=Math.hypot(dx,dy)||1;
+    const effSpd=Math.max(1,f.SPD+(f.spdDebuff||0));
+    const baseMaxSpd=100+effSpd*20;
 
-      // Dash / Recoil Easing
-      if (f.dashTimer > 0) {
-        f.dashTimer -= dt * 2.5; // Back to normal in ~0.4s
-        if (f.dashTimer < 0) { f.dashTimer = 0; f.isDashing = false; }
-      }
+    // Dash / Recoil Easing
+    if (f.dashTimer > 0) {
+      f.dashTimer -= dt * 2.5; // Back to normal in ~0.4s
+      if (f.dashTimer < 0) { f.dashTimer = 0; f.isDashing = false; }
+    }
 
-      // Constant speed increase (100%/s) except for unarmed
-      const cat = f.weapon ? resolveCategory(f.weapon) : CAT.UNARMED;
-      if (cat !== CAT.UNARMED) {
-        f.accel = Math.min(f.accel + f.accel * 1.0 * dt, 15);
-      }
+    // Constant speed increase (100%/s) except for unarmed
+    const cat = f.weapon ? resolveCategory(f.weapon) : CAT.UNARMED;
+    if (cat !== CAT.UNARMED) {
+      f.accel = Math.min(f.accel + f.accel * 1.0 * dt, 15);
+    }
 
-      // Accel also builds when SPD advantage, extra for unarmed
-      const spdDiff=Math.max(0,f.SPD-opponent.SPD);
-      if (cat === CAT.UNARMED) {
-        f.accel=Math.min(f.accel+spdDiff*0.08*dt+0.015*dt, 4.5);
-      }
+    // Accel also builds when SPD advantage, extra for unarmed
+    const spdDiff=Math.max(0,f.SPD-opponent.SPD);
+    if (cat === CAT.UNARMED) {
+      f.accel=Math.min(f.accel+spdDiff*0.08*dt+0.015*dt, 4.5);
+    }
 
-      const curMaxSpd=baseMaxSpd*f.accel;
+    const curMaxSpd=baseMaxSpd*f.accel;
 
-      // Apply Dash Boost to velocity if dashing
-      let dashBoost = 1.0;
-      if (f.isDashing) {
-        // Cubic easing for "lao lên nhanh, giật lùi từ từ"
-        // t=1 is start of dash (hit moment), decays to 0
-        // We want a sharp recoil then slow recovery
-        dashBoost = 1.0 + Math.pow(f.dashTimer, 2) * 2.0; 
-      }
+    // Apply Dash Boost to velocity if dashing
+    let dashBoost = 1.0;
+    if (f.isDashing) {
+      // Cubic easing for "lao lên nhanh, giật lùi từ từ"
+      // t=1 is start of dash (hit moment), decays to 0
+      // We want a sharp recoil then slow recovery
+      dashBoost = 1.0 + Math.pow(f.dashTimer, 2) * 2.0; 
+    }
 
+    if (!isFiringAndBow) {
       // Soft pull toward opponent only at long range
       const farThresh=arenaW*0.5;
       if(dist>farThresh){
@@ -2636,15 +2635,17 @@ function arenaLoop(ts){
       // Record trail for afterimage (at the end of movement)
       f.trail.push({ x: f.x, y: f.y });
       if (f.trail.length > 15) f.trail.shift();
+    }
 
-      // ── Weapon spin ────────────────────────────────────────────────
+    // ── Weapon spin ────────────────────────────────────────────────
+    if (!isFiringAndBow) {
       f.wepSpeed=Math.PI*(0.55+f.BIQ*0.14);
       if( (f.weapon?.category?.toLowerCase().includes('firearm') || f.weapon?.category?.toLowerCase().includes('bow') || f.weapon?.category?.toLowerCase().includes('polearm'))){
         f.wepAngle=Math.atan2(opponent.y-f.y,opponent.x-f.x);
       } else {
         f.wepAngle+=f.wepSpeed*f.wepDir*dt;
       }
-    } else if (f.isFiring && currentWepCat === CAT.BOW) {
+    } else {
       // When firing bow, point at enemy
       f.wepAngle = Math.atan2(opponent.y - f.y, opponent.x - f.x);
     }
