@@ -2561,7 +2561,8 @@ function arenaLoop(ts){
     if(f.bodyHitCooldown>0) f.bodyHitCooldown-=dt;
     if(f.wepWepCooldown>0)  f.wepWepCooldown-=dt;
 
-    if (!f.isFiring || currentWepCat !== CAT.BOW) {
+    // Only skip movement if we're firing AND it's a bow
+    if (!(f.isFiring && currentWepCat === CAT.BOW)) {
       // ── Movement (px/s physics) ───────────────────────────────────
       const dx=opponent.x-f.x, dy=opponent.y-f.y;
       const dist=Math.hypot(dx,dy)||1;
@@ -2643,7 +2644,7 @@ function arenaLoop(ts){
       } else {
         f.wepAngle+=f.wepSpeed*f.wepDir*dt;
       }
-    } else if (currentWepCat === CAT.BOW) {
+    } else if (f.isFiring && currentWepCat === CAT.BOW) {
       // When firing bow, point at enemy
       f.wepAngle = Math.atan2(opponent.y - f.y, opponent.x - f.x);
     }
