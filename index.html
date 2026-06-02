@@ -2065,9 +2065,11 @@ function spawnVisualProjectile(attacker, target, cat, dmg) {
   };
   simProjectiles.push(p);
   
-  // Trigger firing state
-  attacker.isFiring = true;
-  attacker.firingTimer = 0.3; // Đứng im 0.3s mỗi lần bắn
+  // Trigger firing state only for bow
+  if (cat === CAT.BOW) {
+    attacker.isFiring = true;
+    attacker.firingTimer = 0.3; // Đứng im 0.3s mỗi lần bắn
+  }
 }
 
 function initFighters(){
@@ -2536,8 +2538,9 @@ function arenaLoop(ts){
     // stun
     if(f.stunTimer>0){f.stunTimer-=dt;return;}
     
-    // Firing state
-    if (f.isFiring) {
+    // Firing state only for bow
+    const currentWepCat = f.weapon ? resolveCategory(f.weapon) : CAT.UNARMED;
+    if (f.isFiring && currentWepCat === CAT.BOW) {
       f.firingTimer -= dt;
       if (f.firingTimer <= 0) {
         f.isFiring = false;
@@ -2548,6 +2551,9 @@ function arenaLoop(ts){
         // Bỏ qua các phần movement, drift, v.v.
         // Jump to weapon auto-fire and collision
       }
+    } else if (f.isFiring) {
+      // Reset isFiring for non-bow weapons
+      f.isFiring = false;
     }
 
     // hit cooldown ticks
@@ -2555,7 +2561,7 @@ function arenaLoop(ts){
     if(f.bodyHitCooldown>0) f.bodyHitCooldown-=dt;
     if(f.wepWepCooldown>0)  f.wepWepCooldown-=dt;
 
-    if (!f.isFiring) {
+    if (!f.isFiring || currentWepCat !== CAT.BOW) {
       // ── Movement (px/s physics) ───────────────────────────────────
       const dx=opponent.x-f.x, dy=opponent.y-f.y;
       const dist=Math.hypot(dx,dy)||1;
@@ -2637,8 +2643,8 @@ function arenaLoop(ts){
       } else {
         f.wepAngle+=f.wepSpeed*f.wepDir*dt;
       }
-    } else {
-      // When firing, even if not bow/firearm/polearm, still point at enemy
+    } else if (currentWepCat === CAT.BOW) {
+      // When firing bow, point at enemy
       f.wepAngle = Math.atan2(opponent.y - f.y, opponent.x - f.x);
     }
 
