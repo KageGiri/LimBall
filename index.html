@@ -2035,7 +2035,7 @@ function spawnVisualProjectile(attacker, target, cat, dmg) {
   const angle = Math.atan2(dy, dx);
   const travelTime = (WEAPON_SCALE[cat]?.travelTime || 0.15) / attacker.projectileSpeedMultiplier;
   const distance = Math.min(Math.hypot(dx, dy), arenaW * 0.8); // Tăng khoảng cách bay
-  const speed = (distance / travelTime) * 0.75; // Giảm tốc độ đi nửa
+  const speed = (distance / travelTime) * 0.15; // Giảm tốc độ đi 80% (từ 0.75 xuống 0.15)
   
   // Vị trí bắt đầu từ vũ khí
   const wepDist = attacker.r * 2.35;
@@ -2147,9 +2147,9 @@ function initFighters(){
     // Set initial auto-fire interval based on weapon
     if(fighter.weapon) {
       const cat = resolveCategory(fighter.weapon);
-      if (cat === CAT.BOW) fighter.autoFireInterval = 1.0;
-      if (cat === CAT.FIREARM) fighter.autoFireInterval = 0.4;
-      if (cat === CAT.MAGIC) fighter.autoFireInterval = 2.0;
+      if (cat === CAT.BOW) fighter.autoFireInterval = 5.0; // Giảm tần suất bắn 80% (từ 1.0 lên 5.0)
+      if (cat === CAT.FIREARM) fighter.autoFireInterval = 2.0; // Giảm tần suất bắn 80% (từ 0.4 lên 2.0)
+      if (cat === CAT.MAGIC) fighter.autoFireInterval = 10.0; // Giảm tần suất bắn 80% (từ 2.0 lên 10.0)
     }
 
     buildHooks(fighter);
