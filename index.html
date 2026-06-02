@@ -2065,10 +2065,17 @@ function spawnVisualProjectile(attacker, target, cat, dmg) {
   };
   simProjectiles.push(p);
   
-  // Trigger firing state only for bow
-  if (cat === CAT.BOW) {
-    attacker.isFiring = true;
-    attacker.firingTimer = 0.3; // Đứng im 0.3s mỗi lần bắn
+  // Trigger firing state and shot count
+  if (cat === CAT.BOW || cat === CAT.FIREARM || (cat === CAT.SPECIAL && attacker.weapon.name.toLowerCase().includes('shuriken'))) {
+    // Đứng im 1 giây khi tấn công cho các vũ khí tầm xa
+    attacker.firingTimer = 1.0;
+    if (cat === CAT.BOW) {
+      attacker.isFiring = true;
+      attacker.shotCount++;
+    } else if (cat === CAT.FIREARM) {
+      attacker.shotCount++;
+    }
+    // Shuriken không cần reload, không cần isFiring
   }
 }
 
@@ -2142,6 +2149,9 @@ function initFighters(){
       firingTimer: 0,
       polearmATK: 0,
       isDualWielder: p.skills.some(sk => sk.name === 'Dual Wielder'),
+      shotCount: 0,
+      reloadTimer: 0,
+      isReloading: false,
     };
 
     // Set initial auto-fire interval based on weapon
@@ -2150,6 +2160,7 @@ function initFighters(){
       if (cat === CAT.BOW) fighter.autoFireInterval = 5.0; // Giảm tần suất bắn 80% (từ 1.0 lên 5.0)
       if (cat === CAT.FIREARM) fighter.autoFireInterval = 2.0; // Giảm tần suất bắn 80% (từ 0.4 lên 2.0)
       if (cat === CAT.MAGIC) fighter.autoFireInterval = 10.0; // Giảm tần suất bắn 80% (từ 2.0 lên 10.0)
+      if (cat === CAT.SPECIAL && fighter.weapon.name.toLowerCase().includes('shuriken')) fighter.autoFireInterval = 5.0; // Shuriken giống Bow về thời gian bắn
     }
 
     buildHooks(fighter);
@@ -2538,21 +2549,20 @@ function arenaLoop(ts){
     // stun
     if(f.stunTimer>0){f.stunTimer-=dt;return;}
     
-    // Firing state only for bow
+    // Firing state: handle firingTimer for all ranged, only stand still for BOW
     const currentWepCat = f.weapon ? resolveCategory(f.weapon) : CAT.UNARMED;
+    const isShuriken = currentWepCat === CAT.SPECIAL && f.weapon.name.toLowerCase().includes('shuriken');
+    const isRanged = currentWepCat === CAT.BOW || currentWepCat === CAT.FIREARM || currentWepCat === CAT.MAGIC || isShuriken;
     let isFiringAndBow = false;
-    if (f.isFiring && currentWepCat === CAT.BOW) {
+    
+    if (isRanged && f.firingTimer > 0) {
       f.firingTimer -= dt;
-      if (f.firingTimer <= 0) {
-        f.isFiring = false;
-      } else {
+      if (currentWepCat === CAT.BOW && f.firingTimer > 0) {
         isFiringAndBow = true;
-        // Đứng im: không cập nhật vị trí, chỉ cập nhật vũ khí về hướng địch
-        // Đặt góc vũ khí về địch
         f.wepAngle = Math.atan2(opponent.y - f.y, opponent.x - f.x);
       }
-    } else if (f.isFiring) {
-      // Reset isFiring for non-bow weapons
+    }
+    if (f.firingTimer <= 0) {
       f.isFiring = false;
     }
 
@@ -2653,21 +2663,46 @@ function arenaLoop(ts){
     // ── Auto-fire for ranged weapons ────────────────────────────────────────
     if(f.weapon){
       const wcat = resolveCategory(f.weapon);
-      // Apply BIQ scaling to fire rate: +10% per BIQ
-      const adjustedFireInterval = f.autoFireInterval * (1 / (1 + f.BIQ * 0.1)) * f.fireRateMultiplier;
-      if ((wcat === CAT.BOW || wcat === CAT.FIREARM || wcat === CAT.MAGIC) && f.stunTimer <= 0) {
-        f.autoFireTimer += dt;
-        if (f.autoFireTimer >= adjustedFireInterval) {
-          f.autoFireTimer = 0;
-          // Spawn projectile
-          spawnVisualProjectile(f, opponent, wcat, f.ATK);
-          // Also spawn extra projectiles
-          for (let i = 0; i < f.extraProjectiles; i++) {
-            // Add a little random offset for extra projectiles
-            const offsetX = (Math.random() - 0.5) * 20;
-            const offsetY = (Math.random() - 0.5) * 20;
-            const tempTarget = { x: opponent.x + offsetX, y: opponent.y + offsetY };
-            spawnVisualProjectile(f, tempTarget, wcat, f.ATK * 0.7);
+      const isShuriken = wcat === CAT.SPECIAL && f.weapon.name.toLowerCase().includes('shuriken');
+      // Handle reload logic
+      if (f.isReloading) {
+        f.reloadTimer -= dt;
+        if (f.reloadTimer <= 0) {
+          f.isReloading = false;
+          f.shotCount = 0;
+          addLog(`${f.name} đã nạp xong vũ khí!`, 'log-event');
+        }
+      } else {
+        // Check if we need to reload
+        if (wcat === CAT.BOW && f.shotCount >= 3) {
+          f.isReloading = true;
+          f.reloadTimer = 10.0;
+          addLog(`${f.name} cần nạp cung (10s)!`, 'log-event');
+        } else if (wcat === CAT.FIREARM && f.shotCount >= 2) {
+          f.isReloading = true;
+          f.reloadTimer = 20.0;
+          addLog(`${f.name} cần nạp súng (20s)!`, 'log-event');
+        }
+      }
+      
+      // Only fire if not reloading and not stunned
+      if (!f.isReloading && f.stunTimer <= 0) {
+        // Apply BIQ scaling to fire rate: +10% per BIQ
+        const adjustedFireInterval = f.autoFireInterval * (1 / (1 + f.BIQ * 0.1)) * f.fireRateMultiplier;
+        if ((wcat === CAT.BOW || wcat === CAT.FIREARM || wcat === CAT.MAGIC || isShuriken) && f.stunTimer <= 0) {
+          f.autoFireTimer += dt;
+          if (f.autoFireTimer >= adjustedFireInterval) {
+            f.autoFireTimer = 0;
+            // Spawn projectile
+            spawnVisualProjectile(f, opponent, wcat, f.ATK);
+            // Also spawn extra projectiles
+            for (let i = 0; i < f.extraProjectiles; i++) {
+              // Add a little random offset for extra projectiles
+              const offsetX = (Math.random() - 0.5) * 20;
+              const offsetY = (Math.random() - 0.5) * 20;
+              const tempTarget = { x: opponent.x + offsetX, y: opponent.y + offsetY };
+              spawnVisualProjectile(f, tempTarget, wcat, f.ATK * 0.7);
+            }
           }
         }
       }
